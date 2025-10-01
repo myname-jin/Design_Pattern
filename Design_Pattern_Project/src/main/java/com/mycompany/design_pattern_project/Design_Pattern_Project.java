@@ -11,6 +11,6 @@ package com.mycompany.design_pattern_project;
 public class Design_Pattern_Project {
 
     public static void main(String[] args) {
-        System.out.println("Hello Woasdrld!");
+        System.out.println("여기서 작업하시면 될 것 같아요");
     }
 }
