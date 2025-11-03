@@ -12,6 +12,6 @@ import login.ConnectView;
 
 public class Main {
     public static void main(String[] args) {
-        new ConnectView(); // IP 입력 전용 창 실행
+        new ConnectView(); // IP 입력 전용 창 실행 xptmxm
     }
 }
