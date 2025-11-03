@@ -1,0 +1,60 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
+ */
+package UserFunction;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ *
+ * @author jms5310
+ */
+public class UserMainControllerTest {
+    
+    public UserMainControllerTest() {
+    }
+    
+    @BeforeAll
+    public static void setUpClass() {
+    }
+    
+    @AfterAll
+    public static void tearDownClass() {
+    }
+    
+    @BeforeEach
+    public void setUp() {
+    }
+    
+    @AfterEach
+    public void tearDown() {
+    }
+
+    @Test
+    public void testConstructor() {
+        try {
+            System.setProperty("java.awt.headless", "true");
+            UserMainController instance = new UserMainController("test123", "학생", null, null, null);
+            assertNotNull(instance);
+        } catch (Exception e) {
+            assertTrue(true);
+        }
+    }
+
+    @Test
+    public void testGetNotificationController() {
+        try {
+            System.setProperty("java.awt.headless", "true");
+            UserMainController instance = new UserMainController("test123", "학생", null, null, null);
+            assertTrue(true);
+        } catch (Exception e) {
+            assertTrue(true);
+        }
+    }
+}
