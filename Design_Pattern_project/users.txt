@@ -1,0 +1,5 @@
+gildongH, asdfg1, 홍길동, manager
+cskim, lkjh0987, 김철수, employee
+kimyh, mnbv123, 김영희3, Employee
+jimin, 1234, 이지민, manager
+jinho, 1234, 임진호, Employee

@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Form version="1.3" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
+  <NonVisualComponents>
+    <Component class="javax.swing.ButtonGroup" name="radiobuttonGroup">
+    </Component>
+  </NonVisualComponents>
+  <Properties>
+    <Property name="defaultCloseOperation" type="int" value="3"/>
+  </Properties>
+  <SyntheticProperties>
+    <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
+  </SyntheticProperties>
+  <AuxValues>
+    <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="1"/>
+    <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
+  </AuxValues>
+
+  <Layout>
+    <DimensionLayout dim="0">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="back" min="-2" pref="70" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="reservationsubmit" min="-2" pref="72" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="checkOutDateLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="checkInDateLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="roomNumberLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="phoneNumberLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="nameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="roomNumberTextField" min="-2" pref="72" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="hoLabel" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                          <Component id="nameTextField" alignment="0" max="32767" attributes="0"/>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Component id="phoneTextField1" min="-2" pref="35" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="phoneTextField2" min="-2" pref="50" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="phoneTextField3" min="-2" pref="50" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="stayCostTextField" min="-2" pref="72" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="wonLabel" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="guestCountTextField" min="-2" pref="72" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="meongLabel" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="checkOutDateTextField" alignment="0" min="-2" pref="72" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="checkInDateTextField" min="-2" pref="72" max="-2" attributes="0"/>
+                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="calendar" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
+                              <EmptySpace min="-2" pref="132" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Group type="103" groupAlignment="1" attributes="0">
+                          <Group type="102" alignment="1" attributes="0">
+                              <Component id="stayCostLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="guestCountLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="paymentMethodLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="onSitePaymentButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="paymentType" min="-2" pref="60" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cardRegistButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="registButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
+                              <Component id="guestPlusButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="labelCardStatus" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="17" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                  </Group>
+              </Group>
+          </Group>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
+                  <Group type="102" alignment="1" attributes="0">
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="nameLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="nameTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="phoneNumberLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="phoneTextField1" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="phoneTextField2" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="phoneTextField3" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="checkInDateLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="checkInDateTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="calendar" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="checkOutDateLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="checkOutDateTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="roomNumberLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="roomNumberTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="hoLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="stayCostLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="stayCostTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="wonLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="guestPlusButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="guestCountLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="guestCountTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="meongLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="labelCardStatus" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="paymentMethodLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="onSitePaymentButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="paymentType" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cardRegistButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="registButton" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace pref="21" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="back" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="reservationsubmit" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+  </Layout>
+  <SubComponents>
+    <Component class="javax.swing.JLabel" name="paymentMethodLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xacb0;&#xc81c;&#xc218;&#xb2e8;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="onSitePaymentButton">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="radiobuttonGroup"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="&#xd604;&#xc7a5;&#xacb0;&#xc81c;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onSitePaymentButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="cardRegistButton">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="radiobuttonGroup"/>
+        </Property>
+        <Property name="selected" type="boolean" value="true"/>
+        <Property name="text" type="java.lang.String" value="&#xce74;&#xb4dc;&#xb4f1;&#xb85d;"/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cardRegistButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="registButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xb4f1;&#xb85d;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="registButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="reservationsubmit">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xc800;&#xc7a5;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="reservationsubmitActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="back">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xb4a4;&#xb85c;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="backActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="labelCardStatus">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xb4f1;&#xb85d;&#xc644;&#xb8cc;"/>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="labelCardStatus.setVisible(false);"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="paymentType">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="2">
+            <StringItem index="0" value="&#xd604;&#xae08;"/>
+            <StringItem index="1" value="&#xce74;&#xb4dc;"/>
+          </StringArray>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="paymentTypeActionPerformed"/>
+      </Events>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
+    </Component>
+    <Component class="javax.swing.JLabel" name="wonLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xc6d0;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="phoneTextField3">
+    </Component>
+    <Component class="javax.swing.JTextField" name="phoneTextField2">
+    </Component>
+    <Component class="javax.swing.JTextField" name="phoneTextField1">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="010"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="stayCostLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xac1d;&#xc2e4; &#xae08;&#xc561;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="phoneNumberLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xc804;&#xd654; &#xbc88;&#xd638;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="nameTextField">
+      <Events>
+        <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="nameTextFieldFocusGained"/>
+        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="nameTextFieldFocusLost"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="nameLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xc774;&#xb984;"/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="hoLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xd638;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="roomNumberTextField">
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="roomNumberTextFieldMouseClicked"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="roomNumberTextFieldActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="roomNumberLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xbc29; &#xbc88;&#xd638;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="stayCostTextField">
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="stayCostTextFieldMouseClicked"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="stayCostTextFieldActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="checkInDateLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xc608;&#xc0c1; &#xccb4;&#xd06c;&#xc778; &#xb0a0;&#xc9dc;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="checkOutDateLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xc608;&#xc0c1; &#xccb4;&#xd06c;&#xc544;&#xc6c3; &#xb0a0;&#xc9dc;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="checkOutDateTextField">
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="checkOutDateTextFieldMouseClicked"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="checkOutDateTextFieldActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JTextField" name="checkInDateTextField">
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="checkInDateTextFieldMouseClicked"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="checkInDateTextFieldActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="guestCountLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xc778;&#xc6d0;&#xc218;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="guestCountTextField">
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="guestCountTextFieldMouseClicked"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="guestCountTextFieldActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="meongLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xba85;"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="guestPlusButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xc778;&#xc6d0; &#xcd94;&#xac00;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="guestPlusButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="calendar">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#xac1d;&#xc2e4; &#xc120;&#xd0dd;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="calendarActionPerformed"/>
+      </Events>
+    </Component>
+  </SubComponents>
+</Form>
