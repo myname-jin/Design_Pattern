@@ -12,10 +12,21 @@ package ServerClient;
 import java.io.*;
 import java.net.Socket;
 
-public class FileSyncClient {
+/**
+ * ConcreteObserver (구체적인 관찰자)
+ * FileWatcher로부터 알림을 받아 파일 동기화를 수행합니다.
+ * FileObserver 인터페이스를 구현합니다.
+ */
+public class FileSyncClient implements FileObserver { // 1. FileObserver 구현
     private static final String CLIENT_RESOURCE_PATH = "src/main/resources/";
 
-    public static void syncFile(String filename) {
+    /**
+     * 2. FileWatcher로부터 알림을 받으면 이 메서드가 호출됩니다. 
+     * -> FileWatcher 로부터 filename 데이터를 직접 push 받는다.
+     * (기존의 static syncFile 메서드 로직이 이곳으로 이동)
+     */
+    @Override
+    public void onFileChanged(String filename) {
         try {
             Socket socket = SocketManager.getSocket();  // ✅ 항상 SocketManager에서 받아옴
             if (socket == null || socket.isClosed()) {
@@ -23,6 +34,8 @@ public class FileSyncClient {
                 return;
             }
 
+            // 3. FileWatcher와 다른 스레드에서 소켓을 사용할 수 있으므로
+            //    스트림은 매번 새로 생성하는 것이 안전합니다.
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             File file = new File(CLIENT_RESOURCE_PATH + filename);
             if (!file.exists()) {
@@ -43,4 +56,7 @@ public class FileSyncClient {
             e.printStackTrace();
         }
     }
+    
+    // 4. 기존의 static syncFile(String filename) 메서드는
+    //    이제 onFileChanged가 대체하므로 삭제합니다.
 }

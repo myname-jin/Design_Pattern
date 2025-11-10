@@ -12,8 +12,6 @@ package login;
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-
-import ServerClient.FileWatcher;
 import ServerClient.SocketManager;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -65,8 +63,9 @@ public class ConnectView extends javax.swing.JFrame {
                 SocketManager.setSocket(socket);
                 System.out.println("[ConnectView] 서버와 연결되었습니다: " + ip + ":" + port);
 
-                // 3) FileWatcher 시작 (예: 파일 동기화가 필요하다면)
-                new FileWatcher().start();
+                // 3) FileWatcher 시작 (제거)
+                //    (로그인 시 시작하도록 LoginController로 이동됨)
+                // new FileWatcher().start(); // <-- 이 줄을 삭제하거나 주석 처리합니다.
 
                 // 4) 로그인 화면으로 넘어가기 (IP 입력 칸 없음)
                 JOptionPane.showMessageDialog(this, "서버 연결 성공");
