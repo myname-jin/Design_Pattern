@@ -83,8 +83,9 @@ public class ReservationGUIController {
         // userName이나 userDept가 비어 있으면 서버에 사용자 정보 요청
         if ((userName == null || userName.isEmpty()) || (userDept == null || userDept.isEmpty())) { 
             try { // 추가
-                out.write("INFO_REQUEST:" + userId + "\n"); 
-                out.flush(); // 추가
+                ServerClient.CommandProcessor.getInstance().addCommand(
+                new ServerClient.InfoRequestCommand(userId)
+                );
                 String response = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine(); 
                 if (response != null && response.startsWith("INFO_RESPONSE:")) { // 추가
                     String[] parts = response.substring("INFO_RESPONSE:".length()).split(","); 
@@ -499,8 +500,8 @@ public class ReservationGUIController {
     //서버에서 불러오기
     private void initializeUserInfoFromServer() {
     try {
-        out.write("INFO_REQUEST:" + userId + "\n");
-        out.flush();
+        ServerClient.CommandProcessor.getInstance().addCommand(
+    new ServerClient.InfoRequestCommand(userId));
 
         String response = in.readLine();
         System.out.println(" 서버 응답: " + response);

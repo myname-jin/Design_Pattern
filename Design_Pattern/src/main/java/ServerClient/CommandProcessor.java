@@ -61,7 +61,12 @@ public class CommandProcessor extends Thread {
             Thread.currentThread().interrupt();
         }
     }
-    
+    public static synchronized void resetInstance() {
+    if (instance != null) {
+        instance.interrupt(); // 현재 스레드에 종료 신호
+        instance = null;      // 싱글톤 인스턴스를 null로 변경
+    }
+}
     /**
      * 내부 스레드 (Consumer)
      * 큐를 감시하다가, 명령이 들어오면 순서대로 꺼내서 실행합니다.

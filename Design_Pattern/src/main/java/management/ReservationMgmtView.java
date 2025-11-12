@@ -340,6 +340,7 @@ public class ReservationMgmtView extends javax.swing.JFrame {
     } catch (java.io.IOException e) {
         e.printStackTrace();
     }
+    ServerClient.CommandProcessor.resetInstance();
     new login.ConnectView();
     this.dispose();
 }

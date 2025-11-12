@@ -137,6 +137,7 @@ public class UserMainController {
 
         // 🔽 2. 알림 시스템 정리 + 화면 전환
         shutdownNotificationSystem();
+        ServerClient.CommandProcessor.resetInstance(); // 1. 인스턴스 리셋
         view.dispose(); // 현재 화면 닫기
 
         // 🔁 3. 서버 재연결 화면(ConnectView)으로 이동 → 새 소켓 생성됨
