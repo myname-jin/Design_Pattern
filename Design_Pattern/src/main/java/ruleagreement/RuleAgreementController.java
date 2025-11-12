@@ -20,13 +20,13 @@ public class RuleAgreementController {
     private final RuleAgreementModel model;
     private final RuleAgreementView view;
 
-    public RuleAgreementController(String userId, String userType, Socket socket, BufferedWriter out) throws Exception {
+    public RuleAgreementController(String userId, String userType, Socket socket, BufferedWriter _out) throws Exception {
         String absolutePath = "src/main/resources/rules.txt";
         this.model = new RuleAgreementModel(absolutePath);
         this.view = new RuleAgreementView(model.getRules());
 
         //  로그아웃 처리
-        LogoutUtil.attach(view, userId, socket, out);
+        LogoutUtil.attach(view, userId);
 
         view.getNextButton().addActionListener(e -> {
             if (view.allChecked()) {
@@ -36,9 +36,9 @@ public class RuleAgreementController {
                 try {
                     // in 스트림 생성
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
+                    BufferedWriter out = _out;
                     //  Main 화면 진입
-                    new UserMainController(userId, userType, socket, in, out);
+                    new UserMainController(userId, userType, socket, in, null);
                 } catch (IOException ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(view, "메인 화면 연결 실패: " + ex.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);

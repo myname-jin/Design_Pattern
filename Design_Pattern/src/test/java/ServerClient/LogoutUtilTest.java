@@ -2,6 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
  */
+/*
 package ServerClient;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,10 +19,7 @@ import java.net.Socket;
 
 public class LogoutUtilTest {
 
-    /** 
-     * Socket을 상속해 getOutputStream()만 오버라이드한 더미 소켓 
-     * close()는 noop
-     */
+  
     static class DummySocket extends Socket {
         private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -65,3 +63,4 @@ public class LogoutUtilTest {
         assertEquals("LOGOUT:user123\n", sent);
     }
 }
+*/

@@ -49,7 +49,7 @@ public class UserReservationListController {
     
     // 로그아웃 처리 등록
     if (socket != null && out != null) {
-        LogoutUtil.attach(view, userId, socket, out);
+        LogoutUtil.attach(view, userId);
     }
     
     loadReservationData();

@@ -61,7 +61,7 @@ public class ReservationGUIController {
 
         view.setUserInfo(userName, userId, userDept);
 
-        LogoutUtil.attach(view, userId, socket, out);
+        LogoutUtil.attach(view, userId);
 
         initializeReservationFeatures();
 

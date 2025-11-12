@@ -8,15 +8,17 @@ package login;
  *
  * @author adsd3
  */
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
+import ServerClient.CommandProcessor;
 import ServerClient.SocketManager;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -25,9 +27,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-/**
- * 최초 “서버 연결” 화면
- */
 public class ConnectView extends javax.swing.JFrame {
 
     private JTextField ipField;
@@ -51,35 +50,30 @@ public class ConnectView extends javax.swing.JFrame {
         add(panel, BorderLayout.CENTER);
         add(connectButton, BorderLayout.SOUTH);
 
-        // “서버 연결” 버튼 클릭 리스너
         connectButton.addActionListener((ActionEvent e) -> {
             String ip = ipField.getText().trim();
             int port = 5000; 
             try {
-                // 1) 실제 서버에 Socket 연결
                 Socket socket = new Socket(ip, port);
-                
-                // 2) SocketManager에 set → 전역에서 재사용 가능
                 SocketManager.setSocket(socket);
                 System.out.println("[ConnectView] 서버와 연결되었습니다: " + ip + ":" + port);
 
-                // 3) FileWatcher 시작 (제거)
-                //    (로그인 시 시작하도록 LoginController로 이동됨)
-                // new FileWatcher().start(); // <-- 이 줄을 삭제하거나 주석 처리합니다.
+                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                // 4) 로그인 화면으로 넘어가기 (IP 입력 칸 없음)
+                CommandProcessor.getInstance().setWriter(out);
+                CommandProcessor.getInstance().start();
+
                 JOptionPane.showMessageDialog(this, "서버 연결 성공");
 
                 SwingUtilities.invokeLater(() -> {
                     LoginView  loginView  = new LoginView();
-                    LoginModel loginModel = new LoginModel();
-                    // SocketManager를 썼기 때문에, LoginController에서는 따로 socket을 받을 필요 없음
-                    new LoginController(loginView, loginModel);
+                    // LoginModel loginModel = new LoginModel(); // 1. 모델(Model) 생성 코드 삭제
+                    new LoginController(loginView, socket, in); // 2. LoginController 호출 시 Model 제거
                     loginView.setLocationRelativeTo(null);
                     loginView.setVisible(true);
                 });
 
-                // 5) 현재 ConnectView 창 닫기
                 dispose();
             } catch (IOException ex) {
                 ex.printStackTrace();

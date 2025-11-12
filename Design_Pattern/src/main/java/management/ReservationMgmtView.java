@@ -331,13 +331,18 @@ public class ReservationMgmtView extends javax.swing.JFrame {
         int result = JOptionPane.showConfirmDialog(this, "로그아웃 하시겠습니까?", "로그아웃", JOptionPane.YES_NO_OPTION);
 
         if (result == JOptionPane.YES_OPTION) {
-            login.LoginView view = new login.LoginView();
-            login.LoginModel model = new login.LoginModel();
-            new login.LoginController(view, model);
-            view.setVisible(true);
-
-            this.dispose();
+    try {
+   
+        java.net.Socket socket = ServerClient.SocketManager.getSocket();
+        if (socket != null && !socket.isClosed()) {
+            socket.close();
         }
+    } catch (java.io.IOException e) {
+        e.printStackTrace();
+    }
+    new login.ConnectView();
+    this.dispose();
+}
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed

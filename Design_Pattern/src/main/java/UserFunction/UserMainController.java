@@ -26,18 +26,18 @@ public class UserMainController {
     private BufferedReader in;
     private BufferedWriter out;
 
-    public UserMainController(String userId, String userType, Socket socket, BufferedReader in, BufferedWriter out) {
+    public UserMainController(String userId, String userType, Socket socket, BufferedReader in, BufferedWriter _out) {
     this.socket = socket;
     this.in = in;
-    this.out = out;
+    this.out = null;
 
     String userName = "알수없음";
     String userDept = "-";
 
     // ✅ 서버로부터 사용자 이름, 학과 요청
     try {
-        out.write("INFO_REQUEST:" + userId + "\n");
-        out.flush();
+        ServerClient.CommandProcessor.getInstance().addCommand(
+        new ServerClient.InfoRequestCommand(userId));
 
         String response = in.readLine();
         if (response != null && response.startsWith("INFO_RESPONSE:")) {
@@ -59,7 +59,7 @@ public class UserMainController {
     initListeners();
 
     if (socket != null && out != null) {
-        LogoutUtil.attach(view, userId, socket, out);
+        LogoutUtil.attach(view, userId);
     }
 
     view.setVisible(true);
@@ -72,10 +72,10 @@ public class UserMainController {
     model.getUserType(),  //  여기 추가
     model.getSocket(),
     model.getIn(),
-    model.getOut()
+    null
 );
             notificationButton = new NotificationButton(
-                model.getUserId(), model.getUserType(),  model.getSocket(), model.getIn(), model.getOut()
+                model.getUserId(), model.getUserType(),  model.getSocket(), model.getIn(), null
             );
             view.setNotificationButton(notificationButton);
         } catch (Exception e) {
@@ -95,7 +95,7 @@ public class UserMainController {
     private void openReservationList() {
         view.dispose();
         shutdownNotificationSystem();
-        new UserReservationListController(model.getUserId(), model.getUserType(),  model.getSocket(), model.getIn(), model.getOut());
+        new UserReservationListController(model.getUserId(), model.getUserType(),  model.getSocket(), model.getIn(), null);
     }
 
     private void openReservationSystem() {
@@ -104,7 +104,7 @@ public class UserMainController {
             shutdownNotificationSystem();
             view.showMessage("강의실 예약 시스템으로 연결됩니다", "안내", JOptionPane.INFORMATION_MESSAGE);
             new ReservationGUIController(model.getUserId(), model.getUserName(), model.getUserDept(),
-                                         model.getUserType(), model.getSocket(), model.getIn(), model.getOut());
+                                         model.getUserType(), model.getSocket(), model.getIn(), null);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "예약 시스템 연결 중 오류: " + e.getMessage(),
                                           "오류", JOptionPane.ERROR_MESSAGE);
@@ -114,7 +114,7 @@ public class UserMainController {
     private void openNoticeSystem() {
         try {
             view.dispose();
-            new UserNoticeController(model.getUserId(), model.getSocket(), model.getIn(), model.getOut());
+            new UserNoticeController(model.getUserId(), model.getSocket(), model.getIn(), null);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "공지사항 시스템 연결 중 오류: " + e.getMessage(),
                                           "오류", JOptionPane.ERROR_MESSAGE);
@@ -127,8 +127,9 @@ public class UserMainController {
     if (result == JOptionPane.YES_OPTION) {
         // 🔽 1. 서버에 로그아웃 메시지 전송
         try {
-            out.write("LOGOUT\n");
-            out.flush();
+            ServerClient.CommandProcessor.getInstance().addCommand(
+            new ServerClient.LogoutCommand(model.getUserId()) );
+            
             socket.close();  // 소켓 종료
         } catch (IOException e) {
             System.err.println("로그아웃 중 오류 발생: " + e.getMessage());

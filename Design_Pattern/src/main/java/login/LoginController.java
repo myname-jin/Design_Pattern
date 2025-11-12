@@ -4,9 +4,11 @@
  */
 package login;
 
-import ServerClient.FileWatcher;     // 1. 임포트 확인
-import ServerClient.FileSyncClient;  // 2. FileSyncClient 임포트 추가
-import ServerClient.SocketManager;
+import ServerClient.CommandProcessor;
+import ServerClient.FileWatcher;
+import ServerClient.FileSyncClient;
+import ServerClient.InfoRequestCommand;
+import ServerClient.LoginCommand;
 import ruleagreement.RuleAgreementController;
 import management.ReservationMgmtView;
 
@@ -17,51 +19,13 @@ import java.net.Socket;
 public class LoginController {
 
     private final LoginView view;
-    private final LoginModel model;
-    private final Socket socket;
-    private final BufferedWriter out;
+    private final Socket socket; 
     private final BufferedReader in;
 
-    public LoginController(LoginView view, LoginModel model) {
+    public LoginController(LoginView view, Socket socket, BufferedReader in) {
         this.view = view;
-        this.model = model;
-
-        Socket tempSocket = SocketManager.getSocket();
-        BufferedWriter tempOut = null;
-        BufferedReader tempIn = null;
-
-        if (tempSocket == null || tempSocket.isClosed()) {
-            JOptionPane.showMessageDialog(view, "서버에 연결되어 있지 않습니다.", "연결 오류", JOptionPane.ERROR_MESSAGE);
-            this.socket = null;
-            this.out = null;
-            this.in = null;
-            return;
-        }
-
-        try {
-            tempOut = new BufferedWriter(new OutputStreamWriter(tempSocket.getOutputStream()));
-            tempIn = new BufferedReader(new InputStreamReader(tempSocket.getInputStream()));
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(view, "스트림 생성 실패: " + e.getMessage(), "스트림 오류", JOptionPane.ERROR_MESSAGE);
-            SocketManager.close();
-            this.socket = null;
-            this.out = null;
-            this.in = null;
-            return;
-        }
-
-        this.socket = tempSocket;
-        this.out = tempOut;
-        this.in = tempIn;
-        setupListeners();
-    }
-
-    public LoginController(LoginView view, LoginModel model, Socket socket) throws IOException {
-        this.view = view;
-        this.model = model;
         this.socket = socket;
-        this.out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        this.in = in;
         setupListeners();
     }
 
@@ -73,38 +37,26 @@ public class LoginController {
     private void attemptLogin() {
         String userId = view.getUserId();
         String password = view.getPassword();
-        String role = view.getRole(); // "학생", "교수", "admin"
+        String role = view.getRole();
 
         try {
-            out.write("LOGIN:" + userId + "," + password + "," + role);
-            out.newLine();
-            out.flush();
+            CommandProcessor.getInstance().addCommand(
+                new LoginCommand(userId, password, role)
+            );
 
             String response = in.readLine();
 
             if ("LOGIN_SUCCESS".equals(response)) {
                 JOptionPane.showMessageDialog(view, userId + "님 로그인 성공");
 
-                SocketManager.setSocket(socket);
-
-                // --- [옵저버 패턴 적용] ---
-                // 3. 기존의 FileWatcher() 시작 코드 삭제
-                // new FileWatcher().start(); // <-- 삭제
-
-                // 4. Subject(주제)와 Observer(관찰자) 객체 생성
                 FileWatcher fileWatcher = new FileWatcher();
                 FileSyncClient fileSyncClient = new FileSyncClient();
-
-                // 5. Observer를 Subject에 등록 (연결)
                 fileWatcher.addObserver(fileSyncClient);
-
-                // 6. Subject (감시자) 스레드 시작
                 fileWatcher.start();
-                // --- [여기까지 적용] ---
 
-                // 🔽 서버에 유저 정보 요청
-                out.write("INFO_REQUEST:" + userId + "\n");
-                out.flush();
+                CommandProcessor.getInstance().addCommand(
+                    new InfoRequestCommand(userId)
+                );
 
                 String userInfoResponse = in.readLine();
                 String name = "알수없음";
@@ -125,7 +77,7 @@ public class LoginController {
                         UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
                         new ReservationMgmtView().setVisible(true);
                     } else {
-                        new RuleAgreementController(userId, userType, socket, out);
+                        new RuleAgreementController(userId, userType, socket, null);
                     }
                     view.dispose();
                 } catch (Exception ex) {
@@ -135,43 +87,43 @@ public class LoginController {
 
             } else if ("WAIT".equals(response)) {
                 JOptionPane.showMessageDialog(view, "현재 접속 인원 초과로 대기 중입니다.");
-
+                
                 String line;
                 while ((line = in.readLine()) != null) {
                     if ("LOGIN_SUCCESS".equals(line)) {
                         JOptionPane.showMessageDialog(view, userId + "님 자동 로그인 성공");
 
-                        SocketManager.setSocket(socket);
-                        
-                        // --- [옵저버 패턴 적용 (대기열 로그인에도 동일하게)] ---
-                        // 7. 기존의 FileWatcher() 시작 코드 삭제
-                        // new FileWatcher().start(); // <-- 삭제
-
-                        // 8. Subject와 Observer 객체 생성
                         FileWatcher fileWatcher = new FileWatcher();
                         FileSyncClient fileSyncClient = new FileSyncClient();
-
-                        // 9. Observer를 Subject에 등록 (연결)
                         fileWatcher.addObserver(fileSyncClient);
-
-                        // 10. Subject (감시자) 스레드 시작
                         fileWatcher.start();
-                        // --- [여기까지 적용] ---
 
-                        // 서버에 정보 요청
-                        out.write("INFO_REQUEST:" + userId);
-                        out.newLine();
-                        out.flush();
+                        CommandProcessor.getInstance().addCommand(
+                            new InfoRequestCommand(userId)
+                        );
+                        
                         String userInfoResponse = in.readLine();
                         String name = "알수없음";
                         String dept = "미지정";
                         String userType = role;
 
-                        // ✅ 여기서 EDT로 새 창 띄우고 기존 창 닫기
+                        if (userInfoResponse != null && userInfoResponse.startsWith("INFO_RESPONSE:")) {
+                            String[] parts = userInfoResponse.substring("INFO_RESPONSE:".length()).split(",");
+                            if (parts.length >= 4) {
+                                name = parts[1];
+                                dept = parts[2];
+                                userType = parts[3];
+                            }
+                        }
+                        
+                        // 람다(invokeLater)에서 사용하려면 'effectively final' 변수가 필요
+                        final String finalUserType = userType;
+                        final String finalUserId = userId;
+                        
                         SwingUtilities.invokeLater(() -> {
                             try {
                                 RuleAgreementController rac
-                                        = new RuleAgreementController(userId, userType, socket, out);
+                                        = new RuleAgreementController(finalUserId, finalUserType, socket, null);
                                 rac.showView();
                             } catch (Exception ex) {
                                 ex.printStackTrace();
@@ -196,9 +148,7 @@ public class LoginController {
     public void handleSignup() {
         view.dispose();
         SignupView signupView = new SignupView();
-        SignupModel signupModel = new SignupModel();
-        new SignupController(signupView, signupModel);
+        new SignupController(signupView, socket, in);
         signupView.setVisible(true);
     }
-
 }
