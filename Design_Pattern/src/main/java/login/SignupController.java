@@ -13,7 +13,7 @@ import ServerClient.RegisterCommand;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.Socket; // 1. Socket 임포트
+import java.net.Socket;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -23,14 +23,14 @@ import javax.swing.SwingUtilities;
 public class SignupController {
     private final SignupView view;
     private final BufferedReader in;
-    private final Socket socket; // 2. Socket 필드 추가
+    private final Socket socket;
 
     /**
      * LoginController로부터 Socket과 BufferedReader(in)를 주입받는 새 생성자
      */
-    public SignupController(SignupView view, Socket socket, BufferedReader in) { // 3. Socket 파라미터 추가
+    public SignupController(SignupView view, Socket socket, BufferedReader in) {
         this.view = view;
-        this.socket = socket; // 4. Socket 필드 초기화
+        this.socket = socket;
         this.in = in;
 
         view.btnRegister.addActionListener(this::sendRegister);
@@ -39,7 +39,6 @@ public class SignupController {
             view.dispose();
             SwingUtilities.invokeLater(() -> {
                 LoginView loginView  = new LoginView();
-                // 5. LoginController 호출 시 socket 전달
                 new LoginController(loginView, socket, in); 
                 loginView.setLocationRelativeTo(null);
                 loginView.setVisible(true);
@@ -72,11 +71,14 @@ public class SignupController {
 
                 SwingUtilities.invokeLater(() -> {
                     LoginView loginView = new LoginView();
-                    // 6. LoginController 호출 시 socket 전달
                     new LoginController(loginView, socket, in); 
                     loginView.setLocationRelativeTo(null);
                     loginView.setVisible(true);
                 });
+            } else if ("REGISTER_FAIL:DUPLICATE_ID".equals(response)) {
+                // 1. [중복 ID 처리]
+                JOptionPane.showMessageDialog(view, "이미 사용 중인 ID입니다.", "회원가입 실패", JOptionPane.ERROR_MESSAGE);
+                
             } else {
                 JOptionPane.showMessageDialog(view, "회원가입에 실패하였습니다.", "에러", JOptionPane.ERROR_MESSAGE);
             }
