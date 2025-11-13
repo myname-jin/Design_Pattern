@@ -15,7 +15,7 @@ public class LoginView extends JFrame {
     private JRadioButton adminRadio = new JRadioButton("관리자");
     private JButton loginButton = new JButton("로그인");
     private JButton registerButton = new JButton("회원가입");
-    private JButton findPasswordButton = new JButton("비밀번호 찾기/변경");
+    private JButton findPasswordButton = new JButton("비밀번호 변경");
     public JLabel labelId = new JLabel("ID:"); // ID: 라벨 생성
     public JLabel labelPw = new JLabel("PW:"); // PW: 라벨 생성
 

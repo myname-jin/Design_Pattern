@@ -32,9 +32,13 @@ public class LoginController {
     private void setupListeners() {
         view.getLoginButton().addActionListener(e -> attemptLogin());
         view.getRegisterButton().addActionListener(e -> handleSignup());
+        
+        // 1. [비밀번호 변경] 버튼 리스너 추가
+        view.getFindPasswordButton().addActionListener(e -> handlePasswordChange());
     }
 
     private void attemptLogin() {
+        // ... (기존 attemptLogin 메서드 내용은 그대로 둡니다) ...
         String userId = view.getUserId();
         String password = view.getPassword();
         String role = view.getRole();
@@ -85,6 +89,9 @@ public class LoginController {
                     JOptionPane.showMessageDialog(view, "화면 전환 오류: " + ex.getMessage());
                 }
 
+            } else if ("LOGIN_LOCKED".equals(response)) {
+                JOptionPane.showMessageDialog(view, "로그인 5회 실패로 5분간 계정이 잠겼습니다.", "로그인 실패", JOptionPane.ERROR_MESSAGE);
+            
             } else if ("WAIT".equals(response)) {
                 JOptionPane.showMessageDialog(view, "현재 접속 인원 초과로 대기 중입니다.");
                 
@@ -116,7 +123,6 @@ public class LoginController {
                             }
                         }
                         
-                        // 람다(invokeLater)에서 사용하려면 'effectively final' 변수가 필요
                         final String finalUserType = userType;
                         final String finalUserId = userId;
                         
@@ -135,8 +141,15 @@ public class LoginController {
                         break;
                     }
                 }
+                
+            } else if (response != null && response.startsWith("FAIL:")) {
+                String count = response.substring("FAIL:".length());
+                JOptionPane.showMessageDialog(view,
+                    "로그인 실패 (" + count + "/5)\n5회 실패 시 5분간 계정이 잠깁니다.",
+                    "로그인 실패", JOptionPane.ERROR_MESSAGE);
+                    
             } else {
-                JOptionPane.showMessageDialog(view, "로그인 실패");
+                JOptionPane.showMessageDialog(view, "로그인 실패", "로그인 실패", JOptionPane.ERROR_MESSAGE);
             }
 
         } catch (IOException ex) {
@@ -150,5 +163,15 @@ public class LoginController {
         SignupView signupView = new SignupView();
         new SignupController(signupView, socket, in);
         signupView.setVisible(true);
+    }
+    
+    /**
+     * 2. [비밀번호 변경] 버튼 처리 메서드 (신규 추가)
+     */
+    private void handlePasswordChange() {
+        view.dispose();
+        PasswordView pwView = new PasswordView();
+        new PasswordController(pwView, socket, in);
+        pwView.setVisible(true);
     }
 }
