@@ -142,8 +142,12 @@ public class ReservationGUIController {
                     String selectedRoomName = view.getSelectedRoom();
                     RoomModel selectedRoom = getRoomByName(selectedRoomName);
 
-                    AbstractReservation test = new StudentReservation();
+                    AbstractReservation test;
                     
+                    if (userType.equals("학생")){
+                    test = new StudentReservation();
+                    } else {test = new ProfessorReservation();}
+                 
                     test.doReservation(userId,
                             userType, userName,
                             userDept, date,
@@ -448,6 +452,7 @@ public class ReservationGUIController {
     /**
      * 예약 정보를 파일에 저장 (reservation.txt)
      */
+    /*
     private void saveReservation(String name, String userType, String userId, String department,
             String roomType, String roomNumber,
             String date, String dayOfWeek, String startTime, String endTime,
@@ -463,6 +468,7 @@ public class ReservationGUIController {
             System.out.println("예약 저장 실패: " + e.getMessage());
         }
     }
+    */
 
     /**
      * 날짜 문자열 → 한글 요일 반환

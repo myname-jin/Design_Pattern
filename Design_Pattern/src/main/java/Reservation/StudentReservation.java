@@ -55,11 +55,7 @@ public class StudentReservation extends AbstractReservation {
 
     @Override
     protected String confirmReservation(String userType) {
-          if (userType.equals("교수")) {
-                return "예약확정";
-            } else {
                 return "예약대기";
-            }
     }
 
 }
