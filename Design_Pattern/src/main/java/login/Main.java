@@ -15,3 +15,4 @@ public class Main {
         new ConnectView(); // IP 입력 전용 창 실행 xptmxm
     }
 }
+                               
