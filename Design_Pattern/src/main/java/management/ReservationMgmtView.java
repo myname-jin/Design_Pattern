@@ -7,49 +7,79 @@ package management;
 import calendar.CalendarController;
 import calendar.ReservationRepositoryModel;
 import calendar.ReservationServiceModel;
-import java.io.IOException;
-import management.ReservationMgmtController;
-import java.util.List;
-import javax.swing.table.DefaultTableModel;
-import management.ReservationMgmtModel;
-import management.NotificationController;
 import visualization.MainView;
 import visualization.ReservationModel;
 import visualization.ReservationController;
-
-import javax.swing.JOptionPane;
-import javax.swing.JComboBox;
-import javax.swing.DefaultCellEditor;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.table.TableColumn;
 import rulemanagement.RuleManagementController;
 
-/**
- *
- * @author suk22
- */
-public class ReservationMgmtView extends javax.swing.JFrame {
+import java.io.IOException;
+import java.util.List;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 
+/**
+ * Observer Pattern이 적용된 관리자 예약 관리 화면
+ * 기존 기능을 모두 유지하며 구조를 개선함.
+ */
+public class ReservationMgmtView extends javax.swing.JFrame implements ReservationObserver {
+
+    // --- 필드 선언 ---
+    // 1. [NEW] 옵저버 패턴을 위한 모델
+    private AdminReservationModel model;
+    
+    // 2. [OLD] 기존 기능을 위한 컨트롤러들 (유지)
+    private ReservationMgmtController oldController = new ReservationMgmtController(); 
     private NotificationController notificationController = new NotificationController();
 
+    // --- 생성자 ---
     public ReservationMgmtView() {
+        // 1. 모델 초기화 및 옵저버 등록
+        this.model = new AdminReservationModel();
+        this.model.addObserver(this); // "나(View)를 관찰자로 등록해줘"
+
+        // 2. UI 초기화 (기존 NetBeans 코드)
         initComponents();
+        
+        // 3. 추가 설정
         setupTableListener();
         setupApprovalColumnEditor();
-        loadReservationData();
-        setTitle("관리자 예약 목록");
+        
+        setTitle("관리자 예약 목록 (Observer Pattern)");
         setLocationRelativeTo(null);
 
+        // 4. 데이터 로드 (이제 모델이 데이터를 로드하고, Observer인 View에게 알림을 줌)
+        model.loadData(); 
+
+        // 5. 알림 모니터링 시작 (기존 기능)
         notificationController.startMonitoring();
     }
 
-    private ReservationMgmtController controller = new ReservationMgmtController();
-
+    // (기존 생성자 유지 - 필요 시 사용)
     public ReservationMgmtView(String userId) {
-        initComponents();
-        setLocationRelativeTo(null);
+        this(); // 위 기본 생성자 호출하여 초기화 통일
         setVisible(true);
+    }
+
+    // [NEW] 옵저버 인터페이스 구현 메서드
+    // 모델 데이터가 변경되면 이 메서드가 자동으로 호출됩니다.
+    @Override
+    public void onReservationUpdated(List<Reservation> reservationList) {
+        SwingUtilities.invokeLater(() -> {
+            DefaultTableModel tableModel = (DefaultTableModel) jTable1.getModel();
+            tableModel.setRowCount(0); // 기존 테이블 내용 삭제
+
+            for (Reservation r : reservationList) {
+                // 모델의 데이터를 테이블에 추가 (toArray 사용)
+                tableModel.addRow(r.toArray());
+            }
+            
+            System.out.println("[View] 테이블이 갱신되었습니다. 데이터 수: " + reservationList.size());
+        });
     }
 
     private void setupApprovalColumnEditor() {
@@ -62,32 +92,31 @@ public class ReservationMgmtView extends javax.swing.JFrame {
 
     private void setupTableListener() {
         jTable1.getModel().addTableModelListener(e -> {
+            if (e.getFirstRow() < 0) return; 
+            
             int row = e.getFirstRow();
             int column = e.getColumn();
 
-            if (column == 6) {
-                String studentId = (String) jTable1.getValueAt(row, 2); // 학번으로 대상 찾기
+            // 6번 컬럼(승인 여부)이 변경되었을 때
+            if (column == 6 && row < jTable1.getRowCount()) {
+                // [수정] 특정 예약을 찾기 위해 모든 정보를 다 가져옵니다.
+                // 컬럼 순서: 0:이름, 1:학과, 2:학번, 3:강의실, 4:날짜, 5:시간, 6:승인여부
+                String studentId = (String) jTable1.getValueAt(row, 2); 
+                String roomName  = (String) jTable1.getValueAt(row, 3);
+                String date      = (String) jTable1.getValueAt(row, 4);
+                String time      = (String) jTable1.getValueAt(row, 5);
                 String newStatus = (String) jTable1.getValueAt(row, 6);
 
-                controller.updateApprovalStatus(studentId, newStatus);
+                // 모델에게 "이 학생의, 이 날짜, 이 시간, 이 강의실 예약을 바꿔줘"라고 구체적으로 요청
+                model.updateStatus(studentId, roomName, date, time, newStatus);
+                
+                // (참고) 기존 컨트롤러는 학번만 받으므로 여전히 전체가 바뀔 위험이 있음.
+                // UI상으로는 이제 개별적으로 잘 바뀔 것입니다.
+                // oldController.updateApprovalStatus(studentId, newStatus); 
             }
         });
     }
-
-    private void loadReservationData() {
-        List<ReservationMgmtModel> reservations = controller.getAllReservations();
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.setRowCount(0); // 기존 데이터 초기화
-
-        for (ReservationMgmtModel r : reservations) {
-            model.addRow(new Object[]{
-                r.getName(), r.getDepartment(), r.getStudentId(),
-                r.getRoom(), r.getDate(), r.getTime(), r.getApproved()
-            });
-        }
-
-    }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -347,45 +376,31 @@ public class ReservationMgmtView extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        // [유지] 사용자 제한 기능 (기존 Controller 사용)
         int selectedRow = jTable1.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "제한할 사용자를 선택하세요.");
             return;
         }
-        String studentId = (String) jTable1.getValueAt(selectedRow, 2);
-        controller.banUser(studentId);
+        String studentId = (String) jTable1.getValueAt(selectedRow, 2); // 학번
+        oldController.banUser(studentId); // 기존 컨트롤러 이용
         JOptionPane.showMessageDialog(this, studentId + " 사용자가 제한되었습니다.");
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // [유지] 사용자 제한 해제 기능
         String studentId = JOptionPane.showInputDialog(this, "해제할 사용자의 학번을 입력하세요.");
         if (studentId != null && !studentId.isEmpty()) {
-            controller.unbanUser(studentId);
+            oldController.unbanUser(studentId); // 기존 컨트롤러 이용
         }
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+        // [NEW] 검색 기능 (모델에게 요청 -> 모델이 필터링 후 notifyObservers 호출)
         String keyword = jTextField1.getText().trim();
-        if (keyword.isEmpty()) {
-            loadReservationData();  // 검색어가 비어 있으면 전체 데이터 다시 로드
-            return;
-        }
-
-        List<ReservationMgmtModel> reservations = controller.getAllReservations();
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.setRowCount(0); // 기존 데이터 초기화
-
-        for (ReservationMgmtModel r : reservations) {
-            if (r.getName().contains(keyword)
-                    || r.getDepartment().contains(keyword)
-                    || r.getStudentId().contains(keyword)
-                    || r.getRoom().contains(keyword)) {
-                model.addRow(new Object[]{
-                    r.getName(), r.getDepartment(), r.getStudentId(),
-                    r.getRoom(), r.getDate(), r.getTime(), r.getApproved()
-                });
-            }
-        }
+        if(keyword.equals("검색해 주세요")) keyword = ""; // placeholder 처리
+        
+        model.filterData(keyword);
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
