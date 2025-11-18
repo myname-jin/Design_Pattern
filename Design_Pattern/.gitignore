@@ -1,2 +1,3 @@
 /target/
 /nbproject/
+echo -e "/target/\n*.class\n.idea/\n*.iml\n.vscode/" >> .gitignore
