@@ -28,11 +28,12 @@ import javax.swing.table.TableColumn;
  */
 public class ReservationMgmtView extends javax.swing.JFrame implements ReservationObserver {
 
+    private boolean isReverting = false; // [추가] 무한루프 방지용
     // --- 필드 선언 ---
     // 1. [NEW] 옵저버 패턴을 위한 모델
     private AdminReservationModel model;
     
-    // 2. [OLD] 기존 기능을 위한 컨트롤러들 (유지)
+    // 2. [OLD] 기존 기능을 위한 컨트롤러들 (유지 - 제한 기능 등에서 사용)
     private ReservationMgmtController oldController = new ReservationMgmtController(); 
     private NotificationController notificationController = new NotificationController();
 
@@ -45,11 +46,30 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         // 2. UI 초기화 (기존 NetBeans 코드)
         initComponents();
         
-        // 3. 추가 설정
+        // 검색창 클릭 시 텍스트 자동 삭제/복구 기능 추가
+        jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                // 클릭했을 때, "검색해 주세요"가 적혀있으면 지워준다.
+                if (jTextField1.getText().equals("검색해 주세요")) {
+                    jTextField1.setText("");
+                }
+            }
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                // 다른 곳을 클릭했을 때, 비어있으면 다시 "검색해 주세요"를 채워준다.
+                if (jTextField1.getText().isEmpty()) {
+                    jTextField1.setText("검색해 주세요");
+                }
+            }
+        });
+        
+        // 3. 추가 설정 (테이블 컬럼 재설정 포함)
+        setTableColumns();
         setupTableListener();
         setupApprovalColumnEditor();
         
-        setTitle("관리자 예약 목록 (Observer Pattern)");
+        setTitle("관리자 예약 목록");
         setLocationRelativeTo(null);
 
         // 4. 데이터 로드 (이제 모델이 데이터를 로드하고, Observer인 View에게 알림을 줌)
@@ -81,38 +101,88 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
             System.out.println("[View] 테이블이 갱신되었습니다. 데이터 수: " + reservationList.size());
         });
     }
+    
+    // [NEW] 테이블 컬럼 헤더를 12개 데이터 구조에 맞춰 새로 설정
+    private void setTableColumns() {
+        String[] columnNames = {
+            "학번", "학과", "이름", "구분", "강의실", "날짜(요일)", "시간", "목적", "상태"
+        };
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
+        jTable1.setModel(tableModel);
+    }
 
     private void setupApprovalColumnEditor() {
         String[] statusOptions = {"예약대기", "승인", "거절"};
         JComboBox<String> comboBox = new JComboBox<>(statusOptions);
 
-        TableColumn statusColumn = jTable1.getColumnModel().getColumn(6);
-        statusColumn.setCellEditor(new DefaultCellEditor(comboBox));
+        // "상태" 컬럼은 이제 8번 인덱스입니다.
+        if (jTable1.getColumnCount() > 8) {
+            TableColumn statusColumn = jTable1.getColumnModel().getColumn(8);
+            statusColumn.setCellEditor(new DefaultCellEditor(comboBox));
+        }
     }
 
-    private void setupTableListener() {
+   private void setupTableListener() {
         jTable1.getModel().addTableModelListener(e -> {
+            // 1. 값이 되돌려지는 중이라면 리스너 무시 (무한루프 방지)
+            if (isReverting) return;
             if (e.getFirstRow() < 0) return; 
             
             int row = e.getFirstRow();
             int column = e.getColumn();
 
-            // 6번 컬럼(승인 여부)이 변경되었을 때
-            if (column == 6 && row < jTable1.getRowCount()) {
-                // [수정] 특정 예약을 찾기 위해 모든 정보를 다 가져옵니다.
-                // 컬럼 순서: 0:이름, 1:학과, 2:학번, 3:강의실, 4:날짜, 5:시간, 6:승인여부
-                String studentId = (String) jTable1.getValueAt(row, 2); 
-                String roomName  = (String) jTable1.getValueAt(row, 3);
-                String date      = (String) jTable1.getValueAt(row, 4);
-                String time      = (String) jTable1.getValueAt(row, 5);
-                String newStatus = (String) jTable1.getValueAt(row, 6);
-
-                // 모델에게 "이 학생의, 이 날짜, 이 시간, 이 강의실 예약을 바꿔줘"라고 구체적으로 요청
-                model.updateStatus(studentId, roomName, date, time, newStatus);
+            // 8번 컬럼(승인 여부)이 변경되었을 때
+            if (column == 8 && row < jTable1.getRowCount()) {
+                // 데이터 가져오기
+                String studentId = (String) jTable1.getValueAt(row, 0); 
+                String roomName  = (String) jTable1.getValueAt(row, 4);
                 
-                // (참고) 기존 컨트롤러는 학번만 받으므로 여전히 전체가 바뀔 위험이 있음.
-                // UI상으로는 이제 개별적으로 잘 바뀔 것입니다.
-                // oldController.updateApprovalStatus(studentId, newStatus); 
+                String dateStr = (String) jTable1.getValueAt(row, 5);
+                String date = dateStr.contains("(") ? dateStr.substring(0, dateStr.indexOf("(")) : dateStr;
+
+                String timeStr = (String) jTable1.getValueAt(row, 6);
+                String startTime = timeStr.contains("~") ? timeStr.split("~")[0] : timeStr;
+                
+                String newStatus = (String) jTable1.getValueAt(row, 8);
+
+                // ===========================================================
+                // [핵심 수정] 이미 승인/거절/취소된 상태인지 확인
+                // ===========================================================
+                String currentStatus = model.getCurrentStatus(studentId, roomName, date, startTime);
+                
+                // 원래 상태가 '예약대기'가 아닌데, 값을 바꾸려고 한다면?
+                if (currentStatus != null && !"예약대기".equals(currentStatus) && !currentStatus.equals(newStatus)) {
+                    
+                    // 경고 메시지
+                    JOptionPane.showMessageDialog(this, 
+                            "이미 '" + currentStatus + "' 처리된 예약은 변경할 수 없습니다.\n(취소가 필요한 경우 '강제 취소' 버튼을 이용하세요.)",
+                            "변경 불가", JOptionPane.WARNING_MESSAGE);
+
+                    // 값을 원래대로 되돌리기 (UI 스레드 안전 처리)
+                    SwingUtilities.invokeLater(() -> {
+                        isReverting = true; // 깃발 들기 (리스너 동작 멈춰!)
+                        jTable1.setValueAt(currentStatus, row, 8); // 값 원복
+                        isReverting = false; // 깃발 내리기
+                    });
+                    return; // 커맨드 실행 안 하고 종료
+                }
+                // ===========================================================
+
+                // 승인/거절 커맨드 실행 로직 (기존 유지)
+                ReservationCommand command = null;
+
+                if ("승인".equals(newStatus)) {
+                    command = new ApproveCommand(model, studentId, roomName, date, startTime);
+                } else if ("거절".equals(newStatus)) {
+                    command = new RejectCommand(model, studentId, roomName, date, startTime);
+                } else {
+                    model.updateStatus(studentId, roomName, date, startTime, newStatus);
+                    return;
+                }
+
+                if (command != null) {
+                    command.execute();
+                }
             }
         });
     }
@@ -142,6 +212,9 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         jButton9 = new javax.swing.JButton();
         jButton10 = new javax.swing.JButton();
         jButton11 = new javax.swing.JButton();
+        jButton12 = new javax.swing.JButton();
+        jComboBox1 = new javax.swing.JComboBox<>();
+        jButton13 = new javax.swing.JButton();
 
         javax.swing.GroupLayout jFrame1Layout = new javax.swing.GroupLayout(jFrame1.getContentPane());
         jFrame1.getContentPane().setLayout(jFrame1Layout);
@@ -166,7 +239,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
                 {null, null, null, null, null, null, null}
             },
             new String [] {
-                "이름", "학과", "학번", "강의실", "날짜", "시간", "승인 여부"
+                "학번", "학과", "이름", "강의실", "날짜", "시간", "승인 여부"
             }
         ));
         jScrollPane1.setViewportView(jTable1);
@@ -255,6 +328,27 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
             }
         });
 
+        jButton12.setText("새로고침");
+        jButton12.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton12ActionPerformed(evt);
+            }
+        });
+
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "전체", "이름", "학과", "학번", "구분", "강의실", "날짜", "상태" }));
+        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox1ActionPerformed(evt);
+            }
+        });
+
+        jButton13.setText("예약 강제취소");
+        jButton13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton13ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -262,19 +356,25 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
             .addGroup(layout.createSequentialGroup()
                 .addGap(21, 21, 21)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton10, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jButton10, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton12, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jButton13)))
+                .addGap(128, 128, 128)
+                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(163, 163, 163)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jButton5)
                         .addGap(6, 6, 6))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -306,7 +406,8 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton10))
+                    .addComponent(jButton10)
+                    .addComponent(jButton12))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -314,7 +415,9 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
                     .addComponent(jButton6)
                     .addComponent(jButton7)
                     .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField1))
+                    .addComponent(jTextField1)
+                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton13))
                 .addGap(12, 12, 12)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 323, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -378,7 +481,9 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         e.printStackTrace();
     }
     ServerClient.CommandProcessor.resetInstance();
-    new login.ConnectView();
+    login.ConnectView view = new login.ConnectView();
+    view.setVisible(true);
+    
     this.dispose();
 }
     }//GEN-LAST:event_jButton5ActionPerformed
@@ -390,8 +495,9 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
             JOptionPane.showMessageDialog(this, "제한할 사용자를 선택하세요.");
             return;
         }
-        String studentId = (String) jTable1.getValueAt(selectedRow, 2); // 학번
-        oldController.banUser(studentId); // 기존 컨트롤러 이용
+        // [수정됨] 학번이 2번 -> 0번 열로 이동했으므로 인덱스 0에서 가져옴
+        String studentId = (String) jTable1.getValueAt(selectedRow, 0); 
+        oldController.banUser(studentId);
         JOptionPane.showMessageDialog(this, studentId + " 사용자가 제한되었습니다.");
     }//GEN-LAST:event_jButton6ActionPerformed
 
@@ -404,11 +510,13 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
-        // [NEW] 검색 기능 (모델에게 요청 -> 모델이 필터링 후 notifyObservers 호출)
         String keyword = jTextField1.getText().trim();
-        if(keyword.equals("검색해 주세요")) keyword = ""; // placeholder 처리
+        if(keyword.equals("검색해 주세요")) keyword = "";
         
-        model.filterData(keyword);
+        String selectedType = (String) jComboBox1.getSelectedItem();
+        
+        // 모델에게 (검색어 + 기준) 전달
+        model.filterData(keyword, selectedType);
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
@@ -451,10 +559,68 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         });
     }//GEN-LAST:event_jButton11ActionPerformed
 
+    private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
+        // 모델에게 데이터를 다시 읽어오라고 명령
+        model.loadData();
+        
+        // (선택사항) 사용자에게 갱신되었다고 팝업 띄우기 (너무 자주 뜨면 귀찮으니 주석 처리)
+        // JOptionPane.showMessageDialog(this, "최신 예약 정보를 불러왔습니다.");
+    }//GEN-LAST:event_jButton12ActionPerformed
+
+    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jComboBox1ActionPerformed
+
+    private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
+       int selectedRow = jTable1.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "취소할 예약을 선택해주세요.");
+            return;
+        }
+
+        // 선택된 행에서 정보 가져오기
+        String studentId = (String) jTable1.getValueAt(selectedRow, 0); 
+        String roomName  = (String) jTable1.getValueAt(selectedRow, 4);
+        
+        String dateStr = (String) jTable1.getValueAt(selectedRow, 5);
+        String date = dateStr.contains("(") ? dateStr.substring(0, dateStr.indexOf("(")) : dateStr;
+
+        String timeStr = (String) jTable1.getValueAt(selectedRow, 6);
+        String startTime = timeStr.contains("~") ? timeStr.split("~")[0] : timeStr;
+
+        // [핵심 수정] 현재 상태 확인 및 차단 로직
+        String currentStatus = model.getCurrentStatus(studentId, roomName, date, startTime);
+        
+        if ("거절".equals(currentStatus)) {
+            JOptionPane.showMessageDialog(this, "이미 '거절'된 예약입니다.", "취소 불가", JOptionPane.WARNING_MESSAGE);
+            return; // 함수 종료 (명령 실행 안 함)
+        }
+        
+        if ("취소".equals(currentStatus)) {
+            JOptionPane.showMessageDialog(this, "이미 '취소'된 예약입니다.", "취소 불가", JOptionPane.WARNING_MESSAGE);
+            return; // 함수 종료
+        }
+        
+        // 확인 창 띄우기
+        int confirm = JOptionPane.showConfirmDialog(this, 
+                "선택한 예약을 강제로 취소하시겠습니까?\n학생에게 알림이 전송됩니다.", 
+                "예약 강제 취소", JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            // [커맨드 패턴] 강제 취소 명령 실행
+            ReservationCommand command = new CancelCommand(model, studentId, roomName, date, startTime);
+            command.execute();
+            
+            JOptionPane.showMessageDialog(this, "예약이 취소되었습니다.");
+        }
+    }//GEN-LAST:event_jButton13ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton11;
+    private javax.swing.JButton jButton12;
+    private javax.swing.JButton jButton13;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
@@ -463,6 +629,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
+    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JFrame jFrame1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;

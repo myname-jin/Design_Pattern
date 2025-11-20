@@ -16,6 +16,9 @@ import java.net.Socket;
 import Reservation.ReservationGUIController;
 import Reservation.ReservationView;
 
+// [추가] 알림 감시자 매니저
+import management.NotificationManager; 
+
 public class UserMainController {
     private UserMainModel model;
     private UserMainView view;
@@ -25,63 +28,78 @@ public class UserMainController {
     private Socket socket;
     private BufferedReader in;
     private BufferedWriter out;
+    
+    // [추가] 알림 감시자 인스턴스
+    private NotificationManager notiManager = new NotificationManager();
 
     public UserMainController(String userId, String userType, Socket socket, BufferedReader in, BufferedWriter _out) {
-    this.socket = socket;
-    this.in = in;
-    this.out = null;
+        this.socket = socket;
+        this.in = in;
+        this.out = null; 
 
-    String userName = "알수없음";
-    String userDept = "-";
+        String userName = "알수없음";
+        String userDept = "-";
 
-    // ✅ 서버로부터 사용자 이름, 학과 요청
-    try {
-        ServerClient.CommandProcessor.getInstance().addCommand(
-        new ServerClient.InfoRequestCommand(userId));
+        try {
+            ServerClient.CommandProcessor.getInstance().addCommand(
+                new ServerClient.InfoRequestCommand(userId));
 
-        String response = in.readLine();
-        if (response != null && response.startsWith("INFO_RESPONSE:")) {
-            String[] parts = response.substring("INFO_RESPONSE:".length()).split(",");
-            if (parts.length >= 4) {
-                userName = parts[1].trim();
-                userDept = parts[2].trim();
+            String response = in.readLine();
+            if (response != null && response.startsWith("INFO_RESPONSE:")) {
+                String[] parts = response.substring("INFO_RESPONSE:".length()).split(",");
+                if (parts.length >= 4) {
+                    userName = parts[1].trim();
+                    userDept = parts[2].trim();
+                }
             }
+        } catch (IOException e) {
+            System.out.println(" 사용자 정보 수신 실패: " + e.getMessage());
         }
-    } catch (IOException e) {
-        System.out.println(" 사용자 정보 수신 실패: " + e.getMessage());
+
+        this.model = new UserMainModel(userId, userType, socket, in, out);
+        this.view = new UserMainView();
+        view.setWelcomeMessage(userName); 
+
+        initializeNotificationSystem();
+        initListeners();
+
+        if (socket != null && out != null) {
+            LogoutUtil.attach(view, userId);
+        }
+        
+        // ===============================================================
+        // [핵심] 알림 감시자 시작 (3초마다 파일 체크)
+        // ===============================================================
+        notiManager.startMonitoring(userId); 
+        // ===============================================================
+
+        view.setVisible(true);
     }
-
-    this.model = new UserMainModel(userId, userType, socket, in, out);
-    this.view = new UserMainView();
-    view.setWelcomeMessage(userName); //  서버에서 받은 이름 사용
-
-    initializeNotificationSystem();
-    initListeners();
-
-    if (socket != null && out != null) {
-        LogoutUtil.attach(view, userId);
-    }
-
-    view.setVisible(true);
-}
 
     private void initializeNotificationSystem() {
         try {
+            // 1. NotificationController 생성 (싱글톤 getInstance 호출)
             notificationController = NotificationController.getInstance(
-    model.getUserId(),
-    model.getUserType(),  //  여기 추가
-    model.getSocket(),
-    model.getIn(),
-    null
-);
-            notificationButton = new NotificationButton(
-                model.getUserId(), model.getUserType(),  model.getSocket(), model.getIn(), null
+                model.getUserId(),
+                model.getUserType(),
+                model.getSocket(),
+                model.getIn(),
+                null 
             );
+
+            // 2. NotificationButton 생성
+            notificationButton = new NotificationButton(
+                model.getUserId(), 
+                model.getUserType(),  
+                model.getSocket(), 
+                model.getIn(), 
+                null
+            );
+            
             view.setNotificationButton(notificationButton);
+            
         } catch (Exception e) {
             System.err.println("알림 시스템 초기화 실패: " + e.getMessage());
-            JOptionPane.showMessageDialog(view, "알림 시스템 초기화에 실패했습니다. 기본 기능은 정상 작동합니다.",
-                                          "경고", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -94,17 +112,17 @@ public class UserMainController {
 
     private void openReservationList() {
         view.dispose();
-        shutdownNotificationSystem();
+        // shutdownNotificationSystem(); 
         new UserReservationListController(model.getUserId(), model.getUserType(),  model.getSocket(), model.getIn(), null);
     }
 
     private void openReservationSystem() {
         try {
             view.dispose();
-            shutdownNotificationSystem();
+            // shutdownNotificationSystem();
             view.showMessage("강의실 예약 시스템으로 연결됩니다", "안내", JOptionPane.INFORMATION_MESSAGE);
             new ReservationGUIController(model.getUserId(), model.getUserName(), model.getUserDept(),
-                                         model.getUserType(), model.getSocket(), model.getIn(), null);
+                                             model.getUserType(), model.getSocket(), model.getIn(), null);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "예약 시스템 연결 중 오류: " + e.getMessage(),
                                           "오류", JOptionPane.ERROR_MESSAGE);
@@ -124,31 +142,31 @@ public class UserMainController {
     private void handleLogout() {
         int result = JOptionPane.showConfirmDialog(view, "로그아웃 하시겠습니까?", "로그아웃", JOptionPane.YES_NO_OPTION);
 
-    if (result == JOptionPane.YES_OPTION) {
-        // 🔽 1. 서버에 로그아웃 메시지 전송
-        try {
-            ServerClient.CommandProcessor.getInstance().addCommand(
-            new ServerClient.LogoutCommand(model.getUserId()) );
+        if (result == JOptionPane.YES_OPTION) {
+            // [핵심] 감시자 중단
+            notiManager.stopMonitoring();
             
-            socket.close();  // 소켓 종료
-        } catch (IOException e) {
-            System.err.println("로그아웃 중 오류 발생: " + e.getMessage());
+            try {
+                ServerClient.CommandProcessor.getInstance().addCommand(
+                new ServerClient.LogoutCommand(model.getUserId()) );
+                
+                socket.close(); 
+            } catch (IOException e) {
+                System.err.println("로그아웃 중 오류 발생: " + e.getMessage());
+            }
+
+            shutdownNotificationSystem();
+            ServerClient.CommandProcessor.resetInstance(); 
+            view.dispose(); 
+
+            new login.ConnectView(); 
         }
-
-        // 🔽 2. 알림 시스템 정리 + 화면 전환
-        shutdownNotificationSystem();
-        ServerClient.CommandProcessor.resetInstance(); // 1. 인스턴스 리셋
-        view.dispose(); // 현재 화면 닫기
-
-        // 🔁 3. 서버 재연결 화면(ConnectView)으로 이동 → 새 소켓 생성됨
-        new login.ConnectView();  // ← 여기에 IP 입력 화면 있음
-    }
     }
 
     private void shutdownNotificationSystem() {
         try {
-            if (notificationController != null) notificationController.shutdown();
-            if (notificationButton != null) notificationButton.shutdown();
+             if (notificationController != null) notificationController.shutdown();
+             if (notificationButton != null) notificationButton.shutdown();
         } catch (Exception e) {
             System.err.println("알림 시스템 종료 오류: " + e.getMessage());
         }
