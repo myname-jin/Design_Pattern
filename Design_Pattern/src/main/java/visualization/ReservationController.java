@@ -53,7 +53,7 @@ public class ReservationController {
             case WEEK:
                 int week = (int) selectedKey;
                 Map<String, Integer> roomData = model.getRoomStats(currentYear, currentMonth, week);
-                view.roomPanel.setData(roomData, week + "주차 강의실별 상세 (데코레이터 적용)");
+                view.roomPanel.setData(roomData, week + "주차 강의실별 상세 ");
                 view.showCard("ROOM");
                 break;
             case ROOM:

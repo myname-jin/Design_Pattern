@@ -4,6 +4,7 @@
  */
 package visualization;
 
+
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -11,16 +12,16 @@ import java.time.temporal.WeekFields;
 import java.util.*;
 
 public class ReservationModel {
-    // 데이터 구조: 년 -> 월 -> 주 -> 호실 -> 횟수
     private final Map<Integer, Map<Integer, Map<Integer, Map<String, Integer>>>> dataStructure = new TreeMap<>();
     
-    private final String fileName = "src/main/resources/visualization.txt";
+    // 통합된 예약 파일 경로 (상대 경로)
+    private final String fileName = "src/main/resources/RESERVATION.txt"; 
 
     public ReservationModel() {
         loadData();
     }
 
-    // --- Getter 메서드들 (그대로 유지) ---
+    // --- Getter 메서드들 (기존 유지) ---
     public Set<Integer> getYears() { return dataStructure.keySet(); }
     
     public Map<Integer, Integer> getMonths(int year) {
@@ -64,18 +65,18 @@ public class ReservationModel {
                 .flatMap(w -> w.values().stream())
                 .mapToInt(Integer::intValue).sum();
     }
-    // ---------------------------------------
 
-    // ★ 핵심: 로컬 파일 읽기 로직으로 복구됨
+    // --- 데이터 로딩 로직 ---
     private void loadData() {
-        // 프로젝트 루트 폴더에서 visualization.txt를 찾습니다.
         File file = new File(fileName); 
+        
+        // 프로젝트 루트에서도 찾아봄 (경로 호환성)
+        if (!file.exists()) file = new File("RESERVATION.txt");
 
-        System.out.println(" [Client] 시각화 데이터 파일 로딩 시도: " + file.getAbsolutePath());
+        System.out.println("📂 [시각화] 예약 데이터 로딩: " + file.getAbsolutePath());
 
         if (!file.exists()) {
-            System.out.println("️ 파일이 없어서 기본(테스트) 데이터를 사용합니다.");
-            initializeWithDefaultData();
+            System.out.println("⚠️ 예약 파일이 없습니다. (RESERVATION.txt)");
             return;
         }
 
@@ -84,36 +85,44 @@ public class ReservationModel {
             while ((line = br.readLine()) != null) {
                 parseLine(line);
             }
-            System.out.println(" [Client] 로컬 데이터 파일 로딩 성공!");
+            System.out.println("✅ 예약 데이터 로딩 및 통계 변환 완료!");
         } catch (IOException e) {
             System.err.println("파일 읽기 오류: " + e.getMessage());
-            initializeWithDefaultData();
         }
     }
 
+    // ★ 핵심 수정: 새 포맷(12개 컬럼)에 맞춰 파싱
     private void parseLine(String line) {
         try {
-            String[] parts = line.split(",");
-            LocalDate date = LocalDate.parse(parts[0].trim(), DateTimeFormatter.ISO_DATE);
-            String room = parts[1].trim();
+            // 빈 줄이나 짧은 데이터 무시
+            if (line == null || line.trim().isEmpty()) return;
 
+            // 콤마로 분리
+            String[] parts = line.split(",");
+            
+            // 데이터 구조: 
+            // [0]ID, [1]구분, [2]학년, [3]반, [4]타입, [5]호실, [6]날짜, [7]요일, ...
+            // 최소 7개는 있어야 날짜까지 읽음
+            if (parts.length < 7) return; 
+
+            String room = parts[5].trim();     // 911, 912 등
+            String dateStr = parts[6].trim();  // 2024-03-05
+
+            LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ISO_DATE);
+            
             int year = date.getYear();
             int month = date.getMonthValue();
             int week = date.get(WeekFields.of(Locale.KOREA).weekOfMonth());
 
+            // 통계 구조에 집어넣기 (+1 카운트)
             dataStructure.computeIfAbsent(year, k -> new TreeMap<>())
                          .computeIfAbsent(month, k -> new TreeMap<>())
                          .computeIfAbsent(week, k -> new TreeMap<>())
                          .merge(room, 1, Integer::sum);
-        } catch (Exception ignored) {}
-    }
 
-    private void initializeWithDefaultData() {
-        // 비상용 더미 데이터
-        String[] dummy = {
-            "2024-03-05,911", "2024-03-06,912", "2024-03-12,913", "2024-04-01,915",
-            "2025-01-10,918", "2025-01-12,916"
-        };
-        for (String s : dummy) parseLine(s);
+        } catch (Exception e) {
+            // 날짜 형식이 틀리거나 숫자가 아닌 경우 등은 조용히 건너뜀
+            // System.out.println("파싱 건너뜀: " + line); 
+        }
     }
 }
