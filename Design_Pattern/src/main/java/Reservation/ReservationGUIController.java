@@ -133,7 +133,7 @@ public class ReservationGUIController {
         view.addDateSelectionListener(timeUpdateListener);
 
         // 예약 버튼 이벤트 처리
-        view.addReserveButtonListener(
+        /*view.addReserveButtonListener(
                 e -> {
                     String date = view.getSelectedDate();
                     List<String> times = view.getSelectedTimes();
@@ -218,7 +218,56 @@ public class ReservationGUIController {
                 }
             }
         }
-                */);
+                *///);
+        
+        view.addReserveButtonListener(
+                e -> {
+                    // 1. 선택 정보 가져오기
+                    String date = view.getSelectedDate();
+                    List<String> times = view.getSelectedTimes();
+                    String purpose = view.getSelectedPurpose();
+                    String selectedRoomName = view.getSelectedRoom();
+
+                    if (date.isEmpty() || times.isEmpty() || purpose.isEmpty() || selectedRoomName == null) {
+                        view.showMessage("모든 항목을 선택해주세요.");
+                        return;
+                    }
+
+                    // 2. Builder로 예약 객체 생성
+                    ReservationInfo reservation;
+                    try {
+                        reservation = new ReservationInfoBuilder()
+                            .setUserInfo(userId, userName, userDept)
+                            .setRoomInfo(selectedRoomName)
+                            .setDateAndTimes(date, times)
+                            .setPurpose(purpose)
+                            .buildReservation();
+                    } catch (IllegalStateException ex) {
+                        view.showMessage(ex.getMessage());
+                        return;
+                    }
+
+                    // 3. 기존 doReservation 호출 (서버 저장, txt 기록 유지)
+                    AbstractReservation reservationHandler;
+                    if (userType.equals("학생")) {
+                        reservationHandler = new StudentReservation();
+                    } else {
+                        reservationHandler = new ProfessorReservation();
+                    }
+
+                    reservationHandler.doReservation(
+                            userId,
+                            userType,
+                            userName,
+                            userDept,
+                            reservation.getDate(),
+                            reservation.getTimes(),
+                            reservation.getPurpose(),
+                            "", // 단일 시간 필요시 추가
+                            reservation.getRoomName(),
+                            view
+                    );
+                });
 
         view.addBackButtonListener(e -> {
             view.dispose();  // 현재 ReservationView 닫기
