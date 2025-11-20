@@ -48,6 +48,7 @@ public abstract class AbstractReservation {
     private String selectedRoomName;
     private RoomModel selectedRoom;
 
+    /*
     public final void doReservation(String userId, String userType, String userName, String userDept, String date, List<String> times, String purpose, String time, String selectedRoomName, ReservationView view) {
         this.view = view;// -> 이렇게 해도 되나?
         loadRoomsFromExcel();
@@ -57,10 +58,26 @@ public abstract class AbstractReservation {
             return;
         }
          */
+         /*
         if (isUserBanned(userId, userType) == true) {
             return;
         }
-        if (isTimeSlotAlreadyReserved(selectedRoomName, date, times)) { // 🚨 반환 값 확인
+        
+        // RoomCapacity 예약 가능 여부 먼저 확인
+        for (String selectedTime : times) {
+            String[] split = selectedTime.split("~");
+            if (split.length != 2) continue;
+
+            String startTime = split[0].trim();
+            String endTime = split[1].trim();
+
+            if (!RoomCapacity.getInstance().canReserve(this.selectedRoomName, date, startTime, endTime)) {
+                view.showMessage("해당 시간에 예약이 가득 찼습니다.");
+                return;
+            }
+        }
+        
+        if (isTimeSlotAlreadyReserved(selectedRoomName, date, times, userId)) { // 🚨 반환 값 확인
             view.showMessage("선택한 시간대에 이미 예약이 존재합니다."); // 메시지 표시
             return; // 🛑 중복 시 예약 중단
         }
@@ -69,8 +86,123 @@ public abstract class AbstractReservation {
                 return; // 🛑 학생 제약 조건 불충족 시 예약 중단
             }
         }
+        
+        // RoomCapacity 예약 가능 여부 및 등록
+        for (String selectedTime : times) {
+            String[] split = selectedTime.split("~");
+            if (split.length != 2) continue;
+
+            String startTime = split[0].trim();
+            String endTime = split[1].trim();
+
+            // 수용 인원 50% 체크
+            if (!RoomCapacity.getInstance().canReserve(this.selectedRoomName, date, startTime, endTime)) {
+                view.showMessage("해당 시간에 예약이 가득 찼습니다.");
+                return;
+            }
+
+            // 예약 등록 (RoomCapacity 반영)
+            RoomCapacity.getInstance().addReservation(this.selectedRoomName, date, startTime, endTime);
+        }
+        
+        saveReservationsForTimes(times, this.selectedRoomName, date, purpose, userName, userType, userId, userDept);
+        
+         // 결과 뷰 표시
+        viewReservationResult(userType);
+    }*/
+    
+    public final void doReservation(String userId, String userType, String userName, String userDept, String date, List<String> times, String purpose, String time, String selectedRoomName, ReservationView view) {
+        this.view = view;
+        loadRoomsFromExcel();
+        getUserInfo(date, times, purpose, time, selectedRoomName);
+
+        // 입력 체크
+        if (checkAllSelected(date, times, purpose, time) == false) {
+            return;
+        }
+
+        // 금지 사용자 체크
+        if (isUserBanned(userId, userType)) {
+            return;
+        }
+
+        // 본인 예약 중복 체크
+        for (String selectedTime : times) {
+            String[] split = selectedTime.split("~");
+            if (split.length != 2) continue;
+
+            String startTime = split[0].trim();
+            String endTime = split[1].trim();
+
+            if (isTimeSlotAlreadyReservedForUser(selectedRoomName, date, startTime, endTime, userId)) {
+                view.showMessage("이미 해당 시간에 예약이 존재합니다.");
+                return;
+            }
+        }
+
+        // 학생 제약 체크
+        if (isUserTypeStudent(userType) && !studentConstraints(userId, date, times)) {
+            return;
+        }
+
+        // RoomCapacity 체크 및 등록
+        for (String selectedTime : times) {
+            String[] split = selectedTime.split("~");
+            if (split.length != 2) continue;
+
+            String startTime = split[0].trim();
+            String endTime = split[1].trim();
+
+            if (!RoomCapacity.getInstance().canReserve(selectedRoomName, date, startTime, endTime)) {
+                view.showMessage("해당 시간에 예약이 가득 찼습니다.");
+                return;
+            }
+
+            // 예약 카운트 등록
+            RoomCapacity.getInstance().addReservation(selectedRoomName, date, startTime, endTime);
+        }
+
+        // 파일에 예약 저장
         saveReservationsForTimes(times, selectedRoomName, date, purpose, userName, userType, userId, userDept);
 
+        // 결과 뷰 표시
+        viewReservationResult(userType);
+    }
+
+        // 본인 기준으로만 중복 체크
+        private boolean isTimeSlotAlreadyReservedForUser(String roomName, String date, String startTime, String endTime, String userId) {
+        String path = "src/main/resources/reservation.txt";
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(path), "UTF-8"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 10) {
+                    String reservedUserId = parts[2];
+                    String reservedRoom = parts[5];
+                    String reservedDate = parts[6];
+                    String reservedStart = parts[8];
+                    String reservedEnd = parts[9];
+
+                    if (!reservedUserId.equals(userId)) continue;
+                    if (!reservedRoom.equals(roomName) || !reservedDate.equals(date)) continue;
+
+                    Date reservedStartTime = sdf.parse(reservedStart);
+                    Date reservedEndTime = sdf.parse(reservedEnd);
+                    Date newStartTime = sdf.parse(startTime);
+                    Date newEndTime = sdf.parse(endTime);
+
+                    if (newStartTime.before(reservedEndTime) && newEndTime.after(reservedStartTime)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (IOException | ParseException e) {
+            System.out.println("중복 시간 검사 오류: " + e.getMessage());
+        }
+
+        return false;
     }
 
     /*
@@ -161,7 +293,8 @@ public abstract class AbstractReservation {
         return false;
     }
 
-    private boolean isTimeSlotAlreadyReserved(String roomName, String date, List<String> newTimes) {
+    /*
+    private boolean isTimeSlotAlreadyReserved(String roomName, String date, List<String> newTimes, String userId) {
         String path = "src/main/resources/reservation.txt";
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
 
@@ -170,11 +303,14 @@ public abstract class AbstractReservation {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
                 if (parts.length >= 10) {
+                    String reservedUserId = parts[2];
                     String reservedRoom = parts[5];
                     String reservedDate = parts[6];
                     String reservedStart = parts[8];
                     String reservedEnd = parts[9];
 
+                    if (reservedUserId.equals(userId)) continue;
+                    
                     if (reservedRoom.equals(roomName) && reservedDate.equals(date)) {
                         Date reservedStartTime = sdf.parse(reservedStart);
                         Date reservedEndTime = sdf.parse(reservedEnd);
@@ -199,6 +335,21 @@ public abstract class AbstractReservation {
         }
 
         return false;
+    }
+    */
+    
+    private boolean isRoomAvailable(String roomName, String date, List<String> times) {
+        for (String timeSlot : times) {
+            String[] split = timeSlot.split("~");
+            if (split.length == 2) {
+                String start = split[0].trim();
+                String end = split[1].trim();
+                if (!RoomCapacity.getInstance().canReserve(roomName, date, start, end)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -262,6 +413,8 @@ public abstract class AbstractReservation {
             if (split.length == 2) {
                 String startTime = split[0].trim();
                 String endTime = split[1].trim();
+                
+                RoomCapacity.getInstance().addReservation(selectedRoomName, date, startTime, endTime);
 
                 saveReservation(userName, userType, userId, userDept,
                         selectedRoom.getType(), selectedRoom.getName(),

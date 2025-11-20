@@ -82,18 +82,43 @@ public class ReservationInfo {
 
         private boolean validateDateAndDuration(String dateStr, List<String> times) {
             try {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                /*java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
                 java.util.Date reservationDate = sdf.parse(dateStr);
                 java.util.Date now = new java.util.Date();
                 long diff = reservationDate.getTime() - now.getTime();
-                if (diff < 24 * 60 * 60 * 1000L) return false; // 최소 하루 전 체크
+                if (diff < 24 * 60 * 60 * 1000L) return false; // 최소 하루 전 체크 */
+                
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                sdf.setLenient(false);
+
+                java.util.Date reservationDate = sdf.parse(dateStr);
+
+                // 오늘 날짜의 00:00으로 맞추기
+                java.util.Calendar calToday = java.util.Calendar.getInstance();
+                calToday.set(java.util.Calendar.HOUR_OF_DAY, 0);
+                calToday.set(java.util.Calendar.MINUTE, 0);
+                calToday.set(java.util.Calendar.SECOND, 0);
+                calToday.set(java.util.Calendar.MILLISECOND, 0);
+
+                // 예약 날짜도 00:00 기준으로 세팅
+                java.util.Calendar calReserve = java.util.Calendar.getInstance();
+                calReserve.setTime(reservationDate);
+                calReserve.set(java.util.Calendar.HOUR_OF_DAY, 0);
+                calReserve.set(java.util.Calendar.MINUTE, 0);
+                calReserve.set(java.util.Calendar.SECOND, 0);
+                calReserve.set(java.util.Calendar.MILLISECOND, 0);
+
+                // 오늘과 같으면(=당일) false
+                if (calReserve.getTimeInMillis() == calToday.getTimeInMillis()) {
+                    return false;
+                }
 
                 // 총 예약 시간 계산
                 int totalMinutes = 0;
                 java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm");
                 for (String time : times) {
                     String[] split = time.split("~");
-                    if (split.length == 2) {
+                    if (split.length == 3) {
                         java.util.Date start = timeFormat.parse(split[0].trim());
                         java.util.Date end = timeFormat.parse(split[1].trim());
                         totalMinutes += (end.getTime() - start.getTime()) / (1000 * 60);
