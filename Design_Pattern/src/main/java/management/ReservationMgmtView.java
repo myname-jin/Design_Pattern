@@ -350,10 +350,18 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        ReservationModel model = new ReservationModel();
-        ReservationController controller = new ReservationController(model);
-        new MainView(model, controller);
-        this.dispose();
+      //  ReservationModel model = new ReservationModel();
+      //  ReservationController controller = new ReservationController(model);
+      //  new MainView(model, controller);
+     //   this.dispose();
+    visualization.ReservationModel model = new visualization.ReservationModel();
+    visualization.ReservationController controller = new visualization.ReservationController(model);
+    visualization.MainView view = new visualization.MainView(model, controller);
+    
+   
+    controller.setView(view); 
+    
+  
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed

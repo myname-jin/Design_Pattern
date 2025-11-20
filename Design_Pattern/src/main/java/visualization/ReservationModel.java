@@ -5,92 +5,115 @@
 package visualization;
 
 import java.io.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.WeekFields;
 import java.util.*;
 
 public class ReservationModel {
-    private final Map<String, Integer> roomTotals = new TreeMap<>();
-    private final Map<String, Map<String, Integer>> roomByDay = new HashMap<>();
-    private final String[] rooms = {"911", "912", "913", "914", "915", "916", "917", "918"};
-    private final String[] days = {"월", "화", "수", "목", "금"};
-    // private final String filePath = "C:\\SWG\\JAVAPROJECKT\\src\\main\\resources/visualization.txt"; // 이 절대 경로 부분을 수정합니다.
-    private final String resourceName = "/visualization.txt"; // 클래스패스 루트에서 파일을 찾습니다.
+    // 데이터 구조: 년 -> 월 -> 주 -> 호실 -> 횟수
+    private final Map<Integer, Map<Integer, Map<Integer, Map<String, Integer>>>> dataStructure = new TreeMap<>();
+    
+    private final String fileName = "src/main/resources/visualization.txt";
 
     public ReservationModel() {
         loadData();
     }
 
-    public Map<String, Integer> getRoomTotals() {
-        return roomTotals;
+    // --- Getter 메서드들 (그대로 유지) ---
+    public Set<Integer> getYears() { return dataStructure.keySet(); }
+    
+    public Map<Integer, Integer> getMonths(int year) {
+        Map<Integer, Integer> result = new TreeMap<>();
+        if (dataStructure.containsKey(year)) {
+            for (var entry : dataStructure.get(year).entrySet()) {
+                int month = entry.getKey();
+                int count = entry.getValue().values().stream()
+                        .flatMap(w -> w.values().stream())
+                        .mapToInt(Integer::intValue).sum();
+                result.put(month, count);
+            }
+        }
+        return result;
     }
 
-    public Map<String, Integer> getRoomByDay(String room) {
-        return roomByDay.getOrDefault(room, new HashMap<>());
+    public Map<Integer, Integer> getWeeks(int year, int month) {
+        Map<Integer, Integer> result = new TreeMap<>();
+        if (dataStructure.containsKey(year) && dataStructure.get(year).containsKey(month)) {
+            for (var entry : dataStructure.get(year).get(month).entrySet()) {
+                int week = entry.getKey();
+                int count = entry.getValue().values().stream().mapToInt(Integer::intValue).sum();
+                result.put(week, count);
+            }
+        }
+        return result;
     }
 
+    public Map<String, Integer> getRoomStats(int year, int month, int week) {
+        if (dataStructure.containsKey(year) && dataStructure.get(year).containsKey(month) 
+            && dataStructure.get(year).get(month).containsKey(week)) {
+            return dataStructure.get(year).get(month).get(week);
+        }
+        return new HashMap<>();
+    }
+
+    public int getYearTotal(int year) {
+        if (!dataStructure.containsKey(year)) return 0;
+        return dataStructure.get(year).values().stream()
+                .flatMap(m -> m.values().stream())
+                .flatMap(w -> w.values().stream())
+                .mapToInt(Integer::intValue).sum();
+    }
+    // ---------------------------------------
+
+    // ★ 핵심: 로컬 파일 읽기 로직으로 복구됨
     private void loadData() {
-        for (String room : rooms) {
-            roomTotals.put(room, 0);
-            roomByDay.put(room, new HashMap<>());
-            for (String day : days) {
-                roomByDay.get(room).put(day, 0);
-            }
+        // 프로젝트 루트 폴더에서 visualization.txt를 찾습니다.
+        File file = new File(fileName); 
+
+        System.out.println(" [Client] 시각화 데이터 파일 로딩 시도: " + file.getAbsolutePath());
+
+        if (!file.exists()) {
+            System.out.println("️ 파일이 없어서 기본(테스트) 데이터를 사용합니다.");
+            initializeWithDefaultData();
+            return;
         }
 
-        // 1. 클래스 로더를 사용하여 리소스를 스트림으로 읽어옵니다.
-        // 이 방법은 JAR 파일로 패키징해도 작동하며, 현재 프로젝트의 리소스 폴더(src/main/resources 등)에
-        // visualization.txt 파일이 있을 때 적합합니다.
-        try (InputStream is = getClass().getResourceAsStream(resourceName);
-             BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
-
-            if (is == null) {
-                // 리소스 파일을 찾지 못했을 경우, 테스트 데이터를 생성합니다.
-                System.err.println("경로: " + resourceName + "에서 리소스 파일을 찾을 수 없습니다. 테스트 데이터를 생성합니다.");
-                
-                // 파일이 없으면 기본 데이터로 초기화 (원본 파일의 파일 생성 로직 대체)
-                initializeWithDefaultData();
-                return;
-            }
-
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    String day = parts[0].trim();
-                    String room = parts[1].trim();
-                    if (roomTotals.containsKey(room)) {
-                        roomTotals.put(room, roomTotals.get(room) + 1);
-                        Map<String, Integer> dayMap = roomByDay.get(room);
-                        dayMap.put(day, dayMap.getOrDefault(day, 0) + 1);
-                    }
-                }
+                parseLine(line);
             }
-        } catch (IOException | NullPointerException e) {
-            // NullPointerException은 is == null 일 때 br.readLine()에서 발생할 수 있습니다.
-            System.err.println("데이터 로딩 중 오류 발생: " + e.getMessage());
-            initializeWithDefaultData(); // 오류 발생 시 기본 데이터로 초기화
+            System.out.println(" [Client] 로컬 데이터 파일 로딩 성공!");
+        } catch (IOException e) {
+            System.err.println("파일 읽기 오류: " + e.getMessage());
+            initializeWithDefaultData();
         }
     }
 
-    // 파일이 없을 경우 원본 코드에서 생성하던 테스트 데이터를 로드하는 메서드
+    private void parseLine(String line) {
+        try {
+            String[] parts = line.split(",");
+            LocalDate date = LocalDate.parse(parts[0].trim(), DateTimeFormatter.ISO_DATE);
+            String room = parts[1].trim();
+
+            int year = date.getYear();
+            int month = date.getMonthValue();
+            int week = date.get(WeekFields.of(Locale.KOREA).weekOfMonth());
+
+            dataStructure.computeIfAbsent(year, k -> new TreeMap<>())
+                         .computeIfAbsent(month, k -> new TreeMap<>())
+                         .computeIfAbsent(week, k -> new TreeMap<>())
+                         .merge(room, 1, Integer::sum);
+        } catch (Exception ignored) {}
+    }
+
     private void initializeWithDefaultData() {
-        String defaultData = "월,911\n월,912\n화,911\n수,911\n수,913\n목,915\n금,911\n금,912\n화,914\n화,911\n목,911";
-        
-        try (BufferedReader br = new BufferedReader(new StringReader(defaultData))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    String day = parts[0].trim();
-                    String room = parts[1].trim();
-                    if (roomTotals.containsKey(room)) {
-                        roomTotals.put(room, roomTotals.get(room) + 1);
-                        Map<String, Integer> dayMap = roomByDay.get(room);
-                        dayMap.put(day, dayMap.getOrDefault(day, 0) + 1);
-                    }
-                }
-            }
-        } catch (IOException ignored) {
-            // StringReader를 사용하므로 IOException은 발생하지 않습니다.
-        }
+        // 비상용 더미 데이터
+        String[] dummy = {
+            "2024-03-05,911", "2024-03-06,912", "2024-03-12,913", "2024-04-01,915",
+            "2025-01-10,918", "2025-01-12,916"
+        };
+        for (String s : dummy) parseLine(s);
     }
 }
