@@ -35,14 +35,19 @@ public class UserMainController {
     public UserMainController(String userId, String userType, Socket socket, BufferedReader in, BufferedWriter _out) {
         this.socket = socket;
         this.in = in;
-        this.out = null; 
+        
+        // [충돌 해결 1] writer(_out)를 저장해야 커맨드 패턴이 작동함
+        this.out = _out; 
 
         String userName = "알수없음";
         String userDept = "-";
 
+        // ✅ 서버로부터 사용자 이름, 학과 요청
         try {
+            // [충돌 해결 2] InfoRequestCommand에 out 주입
             ServerClient.CommandProcessor.getInstance().addCommand(
-                new ServerClient.InfoRequestCommand(userId));
+                new ServerClient.InfoRequestCommand(out, userId)
+            );
 
             String response = in.readLine();
             if (response != null && response.startsWith("INFO_RESPONSE:")) {
@@ -56,17 +61,20 @@ public class UserMainController {
             System.out.println(" 사용자 정보 수신 실패: " + e.getMessage());
         }
 
+        // 모델 생성 시 out 전달
         this.model = new UserMainModel(userId, userType, socket, in, out);
         this.view = new UserMainView();
-        view.setWelcomeMessage(userName); 
+        view.setWelcomeMessage(userName);
 
         initializeNotificationSystem();
         initListeners();
 
         if (socket != null && out != null) {
-            LogoutUtil.attach(view, userId);
+            // [충돌 해결 3] LogoutUtil에 out 전달
+            LogoutUtil.attach(view, userId, out); 
         }
         
+        // [충돌 해결 4] 알림 감시자 시작 코드는 살려둠
         // ===============================================================
         // [핵심] 알림 감시자 시작 (3초마다 파일 체크)
         // ===============================================================
@@ -78,22 +86,21 @@ public class UserMainController {
 
     private void initializeNotificationSystem() {
         try {
-            // 1. NotificationController 생성 (싱글톤 getInstance 호출)
+            // [충돌 해결 5] NotificationController에도 out 전달 (일관성 유지)
             notificationController = NotificationController.getInstance(
                 model.getUserId(),
                 model.getUserType(),
                 model.getSocket(),
                 model.getIn(),
-                null 
+                model.getOut() 
             );
-
-            // 2. NotificationButton 생성
+            
             notificationButton = new NotificationButton(
                 model.getUserId(), 
-                model.getUserType(),  
+                model.getUserType(), 
                 model.getSocket(), 
                 model.getIn(), 
-                null
+                model.getOut()
             );
             
             view.setNotificationButton(notificationButton);
@@ -112,17 +119,19 @@ public class UserMainController {
 
     private void openReservationList() {
         view.dispose();
-        // shutdownNotificationSystem(); 
-        new UserReservationListController(model.getUserId(), model.getUserType(),  model.getSocket(), model.getIn(), null);
+        shutdownNotificationSystem();
+        // [충돌 해결 6] null 대신 out 전달
+        new UserReservationListController(model.getUserId(), model.getUserType(), model.getSocket(), model.getIn(), out);
     }
 
     private void openReservationSystem() {
         try {
             view.dispose();
-            // shutdownNotificationSystem();
+            shutdownNotificationSystem();
             view.showMessage("강의실 예약 시스템으로 연결됩니다", "안내", JOptionPane.INFORMATION_MESSAGE);
+            // [충돌 해결 7] null 대신 out 전달
             new ReservationGUIController(model.getUserId(), model.getUserName(), model.getUserDept(),
-                                             model.getUserType(), model.getSocket(), model.getIn(), null);
+                                         model.getUserType(), model.getSocket(), model.getIn(), out);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "예약 시스템 연결 중 오류: " + e.getMessage(),
                                           "오류", JOptionPane.ERROR_MESSAGE);
@@ -132,7 +141,8 @@ public class UserMainController {
     private void openNoticeSystem() {
         try {
             view.dispose();
-            new UserNoticeController(model.getUserId(), model.getSocket(), model.getIn(), null);
+            // [충돌 해결 8] null 대신 out 전달
+            new UserNoticeController(model.getUserId(), model.getSocket(), model.getIn(), out);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "공지사항 시스템 연결 중 오류: " + e.getMessage(),
                                           "오류", JOptionPane.ERROR_MESSAGE);
@@ -143,30 +153,37 @@ public class UserMainController {
         int result = JOptionPane.showConfirmDialog(view, "로그아웃 하시겠습니까?", "로그아웃", JOptionPane.YES_NO_OPTION);
 
         if (result == JOptionPane.YES_OPTION) {
-            // [핵심] 감시자 중단
+            // [충돌 해결 9] 알림 감시자 중단 (ad4a9... 변경 사항)
             notiManager.stopMonitoring();
             
+            // 🔽 1. 서버에 로그아웃 메시지 전송 (HEAD 변경 사항: writer 주입)
             try {
                 ServerClient.CommandProcessor.getInstance().addCommand(
-                new ServerClient.LogoutCommand(model.getUserId()) );
+                    new ServerClient.LogoutCommand(out, model.getUserId()) 
+                );
                 
-                socket.close(); 
+                // ⭐️ [핵심 수정] 메시지가 전송될 때까지 0.5초만 기다려줍니다.
+                try { Thread.sleep(500); } catch (InterruptedException e) {} 
+
+                socket.close();  // 소켓 종료
             } catch (IOException e) {
                 System.err.println("로그아웃 중 오류 발생: " + e.getMessage());
             }
 
+            // 🔽 2. 알림 시스템 정리 + 화면 전환
             shutdownNotificationSystem();
             ServerClient.CommandProcessor.resetInstance(); 
             view.dispose(); 
 
-            new login.ConnectView(); 
+            // 🔁 3. 서버 재연결 화면으로 이동
+            new login.ConnectView();  
         }
     }
 
     private void shutdownNotificationSystem() {
         try {
-             if (notificationController != null) notificationController.shutdown();
-             if (notificationButton != null) notificationButton.shutdown();
+            if (notificationController != null) notificationController.shutdown();
+            if (notificationButton != null) notificationButton.shutdown();
         } catch (Exception e) {
             System.err.println("알림 시스템 종료 오류: " + e.getMessage());
         }

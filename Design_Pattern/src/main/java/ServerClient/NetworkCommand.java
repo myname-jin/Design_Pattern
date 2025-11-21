@@ -3,7 +3,6 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package ServerClient;
-import java.io.BufferedWriter;
 import java.io.IOException;
 
 /**
@@ -12,10 +11,5 @@ import java.io.IOException;
  * @author adsd3
  */
 public interface NetworkCommand {
-    /**
-     * 이 명령을 실행합니다.
-     * @param out 명령을 전송할 BufferedWriter (Receiver)
-     * @throws IOException 
-     */
-    void execute(BufferedWriter out) throws IOException;
+    void execute() throws IOException;
 }

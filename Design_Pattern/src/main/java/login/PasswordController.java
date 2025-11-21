@@ -8,26 +8,25 @@ package login;
 import ServerClient.CommandProcessor;
 import ServerClient.PasswordChangeCommand;
 import java.io.BufferedReader;
+import java.io.BufferedWriter; // 추가
 import java.io.IOException;
 import java.net.Socket;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-/**
- * PasswordView를 제어하는 Controller
- * 커맨드 패턴의 'Client' 역할을 합니다.
- * @author adsd3
- */
 public class PasswordController {
     
     private final PasswordView view;
     private final Socket socket;
     private final BufferedReader in;
+    private final BufferedWriter writer; // [추가]
 
-    public PasswordController(PasswordView view, Socket socket, BufferedReader in) {
+    // [수정] 생성자 파라미터 writer 추가
+    public PasswordController(PasswordView view, Socket socket, BufferedReader in, BufferedWriter writer) {
         this.view = view;
         this.socket = socket;
         this.in = in;
+        this.writer = writer; // 저장
         
         this.view.getChangeButton().addActionListener(e -> handleChangePassword());
         this.view.getCancelButton().addActionListener(e -> handleCancel());
@@ -35,11 +34,11 @@ public class PasswordController {
 
     private void handleChangePassword() {
         String userId = view.getUserId();
-        String oldPw = view.getOldPassword(); // 1. 기존 비밀번호 가져오기
+        String oldPw = view.getOldPassword();
         String newPw = view.getNewPassword();
         String confirmPw = view.getConfirmPassword();
 
-        if (userId.isEmpty() || oldPw.isEmpty() || newPw.isEmpty()) { // 2. oldPw도 비었는지 검사
+        if (userId.isEmpty() || oldPw.isEmpty() || newPw.isEmpty()) {
             JOptionPane.showMessageDialog(view, "모든 항목을 입력하세요.");
             return;
         }
@@ -49,9 +48,9 @@ public class PasswordController {
         }
 
         try {
-            // 3. 커맨드에 oldPw 전달
+            // [수정] 커맨드 생성 시 writer 주입
             CommandProcessor.getInstance().addCommand(
-                new PasswordChangeCommand(userId, oldPw, newPw)
+                new PasswordChangeCommand(writer, userId, oldPw, newPw)
             );
             
             // 응답 읽기
@@ -59,11 +58,10 @@ public class PasswordController {
             
             if ("PW_CHANGE_SUCCESS".equals(response)) {
                 JOptionPane.showMessageDialog(view, "비밀번호가 성공적으로 변경되었습니다. 로그인 화면으로 돌아갑니다.");
-                handleCancel(); // 로그인 화면으로
+                handleCancel();
             } else if ("PW_CHANGE_FAIL:NO_ID".equals(response)) {
                 JOptionPane.showMessageDialog(view, "해당 ID를 찾을 수 없습니다.", "오류", JOptionPane.ERROR_MESSAGE);
             } else if ("PW_CHANGE_FAIL:WRONG_OLD_PW".equals(response)) {
-                // 4. 기존 비밀번호 오류 처리
                 JOptionPane.showMessageDialog(view, "기존 비밀번호가 일치하지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(view, "비밀번호 변경에 실패했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
@@ -76,10 +74,10 @@ public class PasswordController {
 
     private void handleCancel() {
         view.dispose();
-        // 로그인 화면으로 돌아감
         SwingUtilities.invokeLater(() -> {
             LoginView loginView = new LoginView();
-            new LoginController(loginView, socket, in);
+            // [수정] 뒤로 갈 때 writer 전달
+            new LoginController(loginView, socket, in, writer);
             loginView.setLocationRelativeTo(null);
             loginView.setVisible(true);
         });

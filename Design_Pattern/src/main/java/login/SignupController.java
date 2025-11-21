@@ -12,26 +12,24 @@ import ServerClient.CommandProcessor;
 import ServerClient.RegisterCommand;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
+import java.io.BufferedWriter; // 추가
 import java.io.IOException;
 import java.net.Socket;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-/**
- * 회원가입 화면의 Controller
- */
 public class SignupController {
     private final SignupView view;
     private final BufferedReader in;
     private final Socket socket;
+    private final BufferedWriter writer; // [추가]
 
-    /**
-     * LoginController로부터 Socket과 BufferedReader(in)를 주입받는 새 생성자
-     */
-    public SignupController(SignupView view, Socket socket, BufferedReader in) {
+    // [수정] 생성자 파라미터에 writer 추가
+    public SignupController(SignupView view, Socket socket, BufferedReader in, BufferedWriter writer) {
         this.view = view;
         this.socket = socket;
         this.in = in;
+        this.writer = writer; // 저장
 
         view.btnRegister.addActionListener(this::sendRegister);
 
@@ -39,7 +37,8 @@ public class SignupController {
             view.dispose();
             SwingUtilities.invokeLater(() -> {
                 LoginView loginView  = new LoginView();
-                new LoginController(loginView, socket, in); 
+                // [수정] 뒤로 갈 때도 writer 전달
+                new LoginController(loginView, socket, in, writer); 
                 loginView.setLocationRelativeTo(null);
                 loginView.setVisible(true);
             });
@@ -59,8 +58,9 @@ public class SignupController {
         }
         
         try {
+            // [수정] RegisterCommand에 writer 주입
             CommandProcessor.getInstance().addCommand(
-                new RegisterCommand(role, id, pw, name, dept)
+                new RegisterCommand(writer, role, id, pw, name, dept)
             );
 
             String response = in.readLine();
@@ -71,12 +71,12 @@ public class SignupController {
 
                 SwingUtilities.invokeLater(() -> {
                     LoginView loginView = new LoginView();
-                    new LoginController(loginView, socket, in); 
+                    // [수정] writer 전달
+                    new LoginController(loginView, socket, in, writer); 
                     loginView.setLocationRelativeTo(null);
                     loginView.setVisible(true);
                 });
             } else if ("REGISTER_FAIL:DUPLICATE_ID".equals(response)) {
-                // 1. [중복 ID 처리]
                 JOptionPane.showMessageDialog(view, "이미 사용 중인 ID입니다.", "회원가입 실패", JOptionPane.ERROR_MESSAGE);
                 
             } else {

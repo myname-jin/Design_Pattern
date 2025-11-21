@@ -4,25 +4,26 @@
  */
 package ServerClient;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-
 /**
  * ConcreteCommand (로그아웃)
  * @author adsd3
  */
+import java.io.BufferedWriter;
+import java.io.IOException;
+
 public class LogoutCommand implements NetworkCommand {
     
+    private final BufferedWriter writer;
     private final String userId;
 
-    public LogoutCommand(String userId) {
+    public LogoutCommand(BufferedWriter writer, String userId) {
+        this.writer = writer;
         this.userId = userId;
     }
 
     @Override
-    public void execute(BufferedWriter out) throws IOException {
-        // LogoutUtil에서 가져온 프로토콜
-        out.write("LOGOUT:" + userId + "\n");
-        out.flush();
+    public void execute() throws IOException {
+        writer.write("LOGOUT:" + userId + "\n");
+        writer.flush();
     }
 }

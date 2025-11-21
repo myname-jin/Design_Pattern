@@ -30,7 +30,7 @@ public class UserNoticeController {
         
         // 로그아웃 처리 연결
         if (socket != null && out != null) {
-            LogoutUtil.attach(view, userId);
+            LogoutUtil.attach(view, userId, out);
         }
         
         // 이벤트 리스너 등록

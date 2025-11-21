@@ -10,18 +10,11 @@ package ServerClient;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedWriter; // (BufferedWriter는 이제 불필요)
-import java.io.IOException;    // (IOException도 이제 불필요)
-import java.net.Socket;        // (Socket도 이제 불필요)
+import java.io.BufferedWriter;
 
 public class LogoutUtil {
 
-    /**
-     * 1. [커맨드 패턴 적용]
-     * 'out'과 'socket' 매개변수를 제거합니다.
-     * CommandProcessor는 싱글톤이므로 매개변수가 필요 없습니다.
-     */
-    public static void attach(JFrame frame, String userId) {
+    public static void attach(JFrame frame, String userId, BufferedWriter writer) {
         if (frame == null || userId == null) {
             return;
         }
@@ -29,13 +22,19 @@ public class LogoutUtil {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                // 2. [커맨드 패턴 적용]
-                //    out.write(...) 대신 CommandProcessor에 명령 추가
+                // 로그아웃 명령 큐에 추가
                 CommandProcessor.getInstance().addCommand(
-                    new LogoutCommand(userId)
+                    new LogoutCommand(writer, userId)
                 );
                 
-               
+                //  [핵심 수정] 메시지가 날아갈 시간을 벌어줍니다 (0.5초)
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+                
+                // 이후 프레임이 닫히고 프로그램 종료됨
             }
         });
     }
