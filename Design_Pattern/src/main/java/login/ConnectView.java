@@ -8,7 +8,6 @@ package login;
  *
  * @author adsd3
  */
-
 import ServerClient.CommandProcessor;
 import ServerClient.SocketManager;
 import java.awt.BorderLayout;
@@ -61,15 +60,16 @@ public class ConnectView extends javax.swing.JFrame {
                 BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                CommandProcessor.getInstance().setWriter(out);
-                CommandProcessor.getInstance().start();
+                // [중요 수정] CommandProcessor.getInstance()를 호출하면 내부에서 자동으로 스레드가 시작됩니다.
+                // 여기서 .start()를 또 호출하면 에러가 발생하므로 삭제했습니다.
+                CommandProcessor.getInstance(); 
 
                 JOptionPane.showMessageDialog(this, "서버 연결 성공");
 
                 SwingUtilities.invokeLater(() -> {
-                    LoginView  loginView  = new LoginView();
-                    // LoginModel loginModel = new LoginModel(); // 1. 모델(Model) 생성 코드 삭제
-                    new LoginController(loginView, socket, in); // 2. LoginController 호출 시 Model 제거
+                    LoginView loginView = new LoginView();
+                    // [수정] LoginController에게 'out' 전달
+                    new LoginController(loginView, socket, in, out); 
                     loginView.setLocationRelativeTo(null);
                     loginView.setVisible(true);
                 });

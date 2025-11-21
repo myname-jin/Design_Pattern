@@ -55,8 +55,8 @@ public class ReservationGUIController {
         System.out.println("최종 유저 정보 - 이름: " + userName + ", 학과: " + userDept);
 
         view.setUserInfo(userName, userId, userDept);
-
-        LogoutUtil.attach(view, userId);
+//여기 수정함요
+        LogoutUtil.attach(view, userId, out);
 
         initializeReservationFeatures();
 
@@ -76,7 +76,7 @@ public class ReservationGUIController {
         if ((userName == null || userName.isEmpty()) || (userDept == null || userDept.isEmpty())) {
             try { // 추가
                 ServerClient.CommandProcessor.getInstance().addCommand(
-                        new ServerClient.InfoRequestCommand(userId)
+                        new ServerClient.InfoRequestCommand(out, userId) //이것도 수정함ㅁ요
                 );
                 String response = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
                 if (response != null && response.startsWith("INFO_RESPONSE:")) { // 추가
@@ -555,7 +555,7 @@ public class ReservationGUIController {
     private void initializeUserInfoFromServer() {
         try {
             ServerClient.CommandProcessor.getInstance().addCommand(
-                    new ServerClient.InfoRequestCommand(userId));
+                    new ServerClient.InfoRequestCommand(out, userId)); //여기수정함요
 
             String response = in.readLine();
             System.out.println(" 서버 응답: " + response);

@@ -4,25 +4,27 @@
  */
 package ServerClient;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-
 /**
  * ConcreteCommand (회원가입)
  * @author adsd3
  */
+import java.io.BufferedWriter;
+import java.io.IOException;
+
 public class RegisterCommand implements NetworkCommand {
     
+    private final BufferedWriter writer;
     private final String msg;
 
-    public RegisterCommand(String role, String id, String pw, String name, String dept) {
+    public RegisterCommand(BufferedWriter writer, String role, String id, String pw, String name, String dept) {
+        this.writer = writer;
         this.msg = String.join(":", "REGISTER", role, id, pw, name, dept);
     }
 
     @Override
-    public void execute(BufferedWriter out) throws IOException {
-        out.write(msg);
-        out.newLine();
-        out.flush();
+    public void execute() throws IOException {
+        writer.write(msg);
+        writer.newLine();
+        writer.flush();
     }
 }
