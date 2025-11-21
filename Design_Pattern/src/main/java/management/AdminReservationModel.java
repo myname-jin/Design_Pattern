@@ -1,26 +1,22 @@
 package management;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 public class AdminReservationModel {
     
-    // 파일 경로 (상대 경로)
+    // 파일 경로
     private static final String FILE_PATH = "src/main/resources/reservation.txt"; 
     
     private List<ReservationObserver> observers = new ArrayList<>();
     private List<Reservation> reservationList = new ArrayList<>();
-    
-    // 옛날 컨트롤러 제거
-    // private ReservationMgmtController realDataController = new ReservationMgmtController();
 
     public void addObserver(ReservationObserver observer) {
         observers.add(observer);
@@ -34,37 +30,40 @@ public class AdminReservationModel {
 
     // --- 비즈니스 로직 ---
 
-    // [수정됨] 옛날 코드에 의존하지 않고, 직접 파일을 읽어옵니다.
     public void loadData() {
         reservationList.clear();
         File file = new File(FILE_PATH);
 
-        // 파일이 없으면 그냥 빈 리스트로 알림 보내고 종료
         if (!file.exists()) {
             System.out.println("[Model] 파일이 없습니다: " + FILE_PATH);
             notifyObservers(reservationList);
             return;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            
             String line;
             while ((line = reader.readLine()) != null) {
-                // 빈 줄은 건너뜀
                 if (line.trim().isEmpty()) continue;
 
-                // 콤마(,)로 분리: 이름,학과,학번,강의실,날짜,시간,승인여부
                 String[] parts = line.split(",");
                 
-                // 데이터 형식이 맞는지 확인 (최소 7개 항목)
-                if (parts.length >= 7) {
+                // 12개 컬럼 확인
+                if (parts.length >= 12) {
                     Reservation res = new Reservation(
-                        parts[0].trim(), // 이름
-                        parts[1].trim(), // 학과
-                        parts[2].trim(), // 학번
-                        parts[3].trim(), // 강의실
-                        parts[4].trim(), // 날짜
-                        parts[5].trim(), // 시간
-                        parts[6].trim()  // 승인여부
+                        parts[0].trim(), // 1.ID
+                        parts[1].trim(), // 2.구분
+                        parts[2].trim(), // 3.이름
+                        parts[3].trim(), // 4.학과
+                        parts[4].trim(), // 5.타입
+                        parts[5].trim(), // 6.호실
+                        parts[6].trim(), // 7.날짜
+                        parts[7].trim(), // 8.요일
+                        parts[8].trim(), // 9.시작
+                        parts[9].trim(), // 10.종료
+                        parts[10].trim(),// 11.목적
+                        parts[11].trim() // 12.상태
                     );
                     reservationList.add(res);
                 }
@@ -74,20 +73,58 @@ public class AdminReservationModel {
             System.err.println("[Model] 파일 읽기 실패!");
         }
         
-        // 화면 갱신 알림 발사!
+        // [핵심 추가] 데이터를 불러온 직후, 지난 예약이 있는지 체크하여 상태 업데이트
+        checkAndExpireReservations();
+        
         notifyObservers(reservationList); 
-        System.out.println("[Model] 데이터 직접 로드 완료: " + reservationList.size() + "건");
+        System.out.println("[Model] 데이터 로드 완료: " + reservationList.size() + "건");
     }
 
-    // 상태 변경 (승인/거절)
-    public void updateStatus(String studentId, String roomName, String date, String time, String newStatus) {
+    // [신규 메서드] 시간이 지난 '승인' 예약을 '예약확정'으로 자동 변경
+    private void checkAndExpireReservations() {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        
+        boolean isUpdated = false;
+
+        for (Reservation res : reservationList) {
+            // 이미 '승인' 상태인 예약만 체크 (거절, 취소, 대기는 건드리지 않음)
+            if ("승인".equals(res.getStatus())) {
+                try {
+                    // 날짜와 종료 시간을 파싱해서 종료 시점(LocalDateTime)을 만듦
+                    LocalDate resDate = LocalDate.parse(res.getDate(), dateFormatter);
+                    LocalTime endTime = LocalTime.parse(res.getEndTime(), timeFormatter);
+                    LocalDateTime endDateTime = LocalDateTime.of(resDate, endTime);
+                    
+                    // 현재 시간이 예약 종료 시간을 지났다면?
+                    if (now.isAfter(endDateTime)) {
+                        res.setStatus("예약확정"); // 상태 자동 변경
+                        isUpdated = true;
+                        System.out.println("[Auto] 지난 예약 확정 처리: " + res.getStudentId() + " / " + res.getDate());
+                    }
+                } catch (Exception e) {
+                    // 날짜 형식이 잘못된 경우 무시
+                    // System.err.println("날짜 파싱 오류: " + e.getMessage());
+                }
+            }
+        }
+
+        // 변경된 사항이 있으면 파일에 저장
+        if (isUpdated) {
+            saveToFile();
+        }
+    }
+
+    // 상태 변경 (관리자 수동 조작)
+    public void updateStatus(String studentId, String roomName, String date, String startTime, String newStatus) {
         boolean isUpdated = false;
 
         for (Reservation res : reservationList) {
             if (res.getStudentId().equals(studentId) &&
                 res.getRoomName().equals(roomName) &&
                 res.getDate().equals(date) &&
-                res.getTime().equals(time)) {
+                res.getStartTime().equals(startTime)) {
                 
                 res.setStatus(newStatus);
                 isUpdated = true;
@@ -96,25 +133,43 @@ public class AdminReservationModel {
         }
         
         if (isUpdated) {
-            saveToFile(); // 변경사항 파일 저장
+            saveToFile(); 
         }
         
         notifyObservers(reservationList); 
     }
 
-    // 파일 저장
+    // 현재 상태 조회 (수정 방지용)
+    public String getCurrentStatus(String studentId, String roomName, String date, String startTime) {
+        for (Reservation res : reservationList) {
+            if (res.getStudentId().equals(studentId) &&
+                res.getRoomName().equals(roomName) &&
+                res.getDate().equals(date) &&
+                res.getStartTime().equals(startTime)) {
+                return res.getStatus();
+            }
+        }
+        return null;
+    }
+
     private void saveToFile() {
         File file = new File(FILE_PATH);
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+            
             for (Reservation res : reservationList) {
-                // 읽어올 때와 똑같은 포맷으로 저장 (CSV)
-                String line = String.format("%s,%s,%s,%s,%s,%s,%s",
+                String line = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
+                        res.getStudentId(),
+                        res.getUserType(),
                         res.getUserName(),
                         res.getDepartment(),
-                        res.getStudentId(),
+                        res.getRoomType(),
                         res.getRoomName(),
                         res.getDate(),
-                        res.getTime(),
+                        res.getDayOfWeek(),
+                        res.getStartTime(),
+                        res.getEndTime(),
+                        res.getPurpose(),
                         res.getStatus()
                 );
                 
@@ -129,24 +184,33 @@ public class AdminReservationModel {
         }
     }
 
-    // 검색 기능
-    public void filterData(String keyword) {
+    public void filterData(String keyword, String searchType) {
         if (keyword == null || keyword.trim().isEmpty()) {
             notifyObservers(reservationList);
             return;
         }
 
         List<Reservation> filteredList = reservationList.stream()
-                .filter(r -> r.getUserName().contains(keyword) ||
-                             r.getDepartment().contains(keyword) ||
-                             r.getStudentId().contains(keyword) ||
-                             r.getRoomName().contains(keyword))
+                .filter(r -> {
+                    switch (searchType) {
+                        case "이름": return r.getUserName().contains(keyword);
+                        case "학과": return r.getDepartment().contains(keyword);
+                        case "학번": return r.getStudentId().contains(keyword);
+                        case "구분": return r.getUserType().contains(keyword);
+                        case "강의실": return r.getRoomName().contains(keyword);
+                        case "날짜": return r.getDate().contains(keyword);
+                        case "상태": return r.getStatus().contains(keyword);
+                        case "전체": default:
+                            return r.getUserName().contains(keyword) ||
+                                   r.getDepartment().contains(keyword) ||
+                                   r.getStudentId().contains(keyword) ||
+                                   r.getRoomName().contains(keyword) ||
+                                   r.getDate().contains(keyword) ||
+                                   r.getStatus().contains(keyword);
+                    }
+                })
                 .collect(Collectors.toList());
 
         notifyObservers(filteredList);
-    }
-    
-    public List<Reservation> getAllReservations() {
-        return reservationList;
     }
 }

@@ -16,6 +16,9 @@ import java.net.Socket;
 import Reservation.ReservationGUIController;
 import Reservation.ReservationView;
 
+// [추가] 알림 감시자 매니저
+import management.NotificationManager; 
+
 public class UserMainController {
     private UserMainModel model;
     private UserMainView view;
@@ -25,20 +28,26 @@ public class UserMainController {
     private Socket socket;
     private BufferedReader in;
     private BufferedWriter out;
+    
+    // [추가] 알림 감시자 인스턴스
+    private NotificationManager notiManager = new NotificationManager();
 
     public UserMainController(String userId, String userType, Socket socket, BufferedReader in, BufferedWriter _out) {
         this.socket = socket;
         this.in = in;
-        this.out = _out; // [수정] 여기서 null로 초기화하던 것을 _out으로 변경
+        
+        // [충돌 해결 1] writer(_out)를 저장해야 커맨드 패턴이 작동함
+        this.out = _out; 
 
         String userName = "알수없음";
         String userDept = "-";
 
         // ✅ 서버로부터 사용자 이름, 학과 요청
         try {
-            // [수정] InfoRequestCommand에 out 주입
+            // [충돌 해결 2] InfoRequestCommand에 out 주입
             ServerClient.CommandProcessor.getInstance().addCommand(
-                new ServerClient.InfoRequestCommand(out, userId));
+                new ServerClient.InfoRequestCommand(out, userId)
+            );
 
             String response = in.readLine();
             if (response != null && response.startsWith("INFO_RESPONSE:")) {
@@ -61,31 +70,43 @@ public class UserMainController {
         initListeners();
 
         if (socket != null && out != null) {
-            // LogoutUtil 수정 필요함 (아래 참조)
+            // [충돌 해결 3] LogoutUtil에 out 전달
             LogoutUtil.attach(view, userId, out); 
         }
+        
+        // [충돌 해결 4] 알림 감시자 시작 코드는 살려둠
+        // ===============================================================
+        // [핵심] 알림 감시자 시작 (3초마다 파일 체크)
+        // ===============================================================
+        notiManager.startMonitoring(userId); 
+        // ===============================================================
 
         view.setVisible(true);
     }
 
     private void initializeNotificationSystem() {
         try {
-            // NotificationController에도 out이 필요할 수 있음. 일단 기존 유지.
+            // [충돌 해결 5] NotificationController에도 out 전달 (일관성 유지)
             notificationController = NotificationController.getInstance(
                 model.getUserId(),
                 model.getUserType(),
                 model.getSocket(),
                 model.getIn(),
-                model.getOut() // null 대신 out 전달
+                model.getOut() 
             );
+            
             notificationButton = new NotificationButton(
-                model.getUserId(), model.getUserType(), model.getSocket(), model.getIn(), model.getOut()
+                model.getUserId(), 
+                model.getUserType(), 
+                model.getSocket(), 
+                model.getIn(), 
+                model.getOut()
             );
+            
             view.setNotificationButton(notificationButton);
+            
         } catch (Exception e) {
             System.err.println("알림 시스템 초기화 실패: " + e.getMessage());
-            JOptionPane.showMessageDialog(view, "알림 시스템 초기화에 실패했습니다. 기본 기능은 정상 작동합니다.",
-                                          "경고", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -99,7 +120,7 @@ public class UserMainController {
     private void openReservationList() {
         view.dispose();
         shutdownNotificationSystem();
-        // [수정] null 대신 out 전달
+        // [충돌 해결 6] null 대신 out 전달
         new UserReservationListController(model.getUserId(), model.getUserType(), model.getSocket(), model.getIn(), out);
     }
 
@@ -108,7 +129,7 @@ public class UserMainController {
             view.dispose();
             shutdownNotificationSystem();
             view.showMessage("강의실 예약 시스템으로 연결됩니다", "안내", JOptionPane.INFORMATION_MESSAGE);
-            // [수정] null 대신 out 전달
+            // [충돌 해결 7] null 대신 out 전달
             new ReservationGUIController(model.getUserId(), model.getUserName(), model.getUserDept(),
                                          model.getUserType(), model.getSocket(), model.getIn(), out);
         } catch (Exception e) {
@@ -120,7 +141,7 @@ public class UserMainController {
     private void openNoticeSystem() {
         try {
             view.dispose();
-            // [수정] null 대신 out 전달
+            // [충돌 해결 8] null 대신 out 전달
             new UserNoticeController(model.getUserId(), model.getSocket(), model.getIn(), out);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "공지사항 시스템 연결 중 오류: " + e.getMessage(),
@@ -132,7 +153,10 @@ public class UserMainController {
         int result = JOptionPane.showConfirmDialog(view, "로그아웃 하시겠습니까?", "로그아웃", JOptionPane.YES_NO_OPTION);
 
         if (result == JOptionPane.YES_OPTION) {
-            // 🔽 1. 서버에 로그아웃 메시지 전송 (큐에 등록)
+            // [충돌 해결 9] 알림 감시자 중단 (ad4a9... 변경 사항)
+            notiManager.stopMonitoring();
+            
+            // 🔽 1. 서버에 로그아웃 메시지 전송 (HEAD 변경 사항: writer 주입)
             try {
                 ServerClient.CommandProcessor.getInstance().addCommand(
                     new ServerClient.LogoutCommand(out, model.getUserId()) 
