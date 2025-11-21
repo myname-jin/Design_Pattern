@@ -22,10 +22,16 @@ public class AdminReservationModel {
         observers.add(observer);
     }
 
-    public void notifyObservers(List<Reservation> dataToShow) {
+    // [중요] 관찰자들에게 변경 사실 알림
+    public void notifyObservers(List<Reservation> dataToShow) { 
         for (ReservationObserver observer : observers) {
             observer.onReservationUpdated(dataToShow);
         }
+    }
+    
+    // 현재 전체 리스트 반환 (필요시 사용)
+    public List<Reservation> getAllReservations() {
+        return reservationList;
     }
 
     // --- 비즈니스 로직 ---
@@ -52,7 +58,7 @@ public class AdminReservationModel {
                 // 12개 컬럼 확인
                 if (parts.length >= 12) {
                     Reservation res = new Reservation(
-                        parts[0].trim(), // 1.ID
+                        parts[0].trim(), // 1.ID (학번)
                         parts[1].trim(), // 2.구분
                         parts[2].trim(), // 3.이름
                         parts[3].trim(), // 4.학과
@@ -73,14 +79,14 @@ public class AdminReservationModel {
             System.err.println("[Model] 파일 읽기 실패!");
         }
         
-        // [핵심 추가] 데이터를 불러온 직후, 지난 예약이 있는지 체크하여 상태 업데이트
+        // 데이터를 불러온 직후, 지난 예약이 있는지 체크하여 상태 업데이트
         checkAndExpireReservations();
         
         notifyObservers(reservationList); 
         System.out.println("[Model] 데이터 로드 완료: " + reservationList.size() + "건");
     }
 
-    // [신규 메서드] 시간이 지난 '승인' 예약을 '예약확정'으로 자동 변경
+    // 시간이 지난 '승인' 예약을 '예약확정'으로 자동 변경
     private void checkAndExpireReservations() {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -89,23 +95,21 @@ public class AdminReservationModel {
         boolean isUpdated = false;
 
         for (Reservation res : reservationList) {
-            // 이미 '승인' 상태인 예약만 체크 (거절, 취소, 대기는 건드리지 않음)
+            // 이미 '승인' 상태인 예약만 체크
             if ("승인".equals(res.getStatus())) {
                 try {
-                    // 날짜와 종료 시간을 파싱해서 종료 시점(LocalDateTime)을 만듦
                     LocalDate resDate = LocalDate.parse(res.getDate(), dateFormatter);
                     LocalTime endTime = LocalTime.parse(res.getEndTime(), timeFormatter);
                     LocalDateTime endDateTime = LocalDateTime.of(resDate, endTime);
                     
                     // 현재 시간이 예약 종료 시간을 지났다면?
                     if (now.isAfter(endDateTime)) {
-                        res.setStatus("예약확정"); // 상태 자동 변경
+                        res.setStatus("예약확정"); 
                         isUpdated = true;
                         System.out.println("[Auto] 지난 예약 확정 처리: " + res.getStudentId() + " / " + res.getDate());
                     }
                 } catch (Exception e) {
                     // 날짜 형식이 잘못된 경우 무시
-                    // System.err.println("날짜 파싱 오류: " + e.getMessage());
                 }
             }
         }

@@ -28,12 +28,12 @@ import javax.swing.table.TableColumn;
  */
 public class ReservationMgmtView extends javax.swing.JFrame implements ReservationObserver {
 
-    private boolean isReverting = false; // [추가] 무한루프 방지용
-    // --- 필드 선언 ---
-    // 1. [NEW] 옵저버 패턴을 위한 모델
+    private boolean isReverting = false; //  무한루프 방지용
+    
+    // 1. 옵저버 패턴을 위한 모델
     private AdminReservationModel model;
     
-    // 2. [OLD] 기존 기능을 위한 컨트롤러들 (유지 - 제한 기능 등에서 사용)
+    // 2.  기존 기능을 위한 컨트롤러들 (유지 - 제한 기능 등에서 사용)
     private ReservationMgmtController oldController = new ReservationMgmtController(); 
     private NotificationController notificationController = new NotificationController();
 
@@ -85,8 +85,8 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         setVisible(true);
     }
 
-    // [NEW] 옵저버 인터페이스 구현 메서드
-    // 모델 데이터가 변경되면 이 메서드가 자동으로 호출됩니다.
+    // 옵저버 인터페이스 구현 메서드
+    // 모델 데이터가 변경되면 이 메서드가 자동으로 호출됨.
     @Override
     public void onReservationUpdated(List<Reservation> reservationList) {
         SwingUtilities.invokeLater(() -> {
@@ -102,7 +102,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         });
     }
     
-    // [NEW] 테이블 컬럼 헤더를 12개 데이터 구조에 맞춰 새로 설정
+    // 테이블 컬럼 헤더를 12개 데이터 구조에 맞춰 새로 설정
     private void setTableColumns() {
         String[] columnNames = {
             "학번", "학과", "이름", "구분", "강의실", "날짜(요일)", "시간", "목적", "상태"
@@ -145,9 +145,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
                 
                 String newStatus = (String) jTable1.getValueAt(row, 8);
 
-                // ===========================================================
-                // [핵심 수정] 이미 승인/거절/취소된 상태인지 확인
-                // ===========================================================
+                //  이미 승인/거절/취소된 상태인지 확인
                 String currentStatus = model.getCurrentStatus(studentId, roomName, date, startTime);
                 
                 // 원래 상태가 '예약대기'가 아닌데, 값을 바꾸려고 한다면?
@@ -166,7 +164,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
                     });
                     return; // 커맨드 실행 안 하고 종료
                 }
-                // ===========================================================
+               
 
                 // 승인/거절 커맨드 실행 로직 (기존 유지)
                 ReservationCommand command = null;
