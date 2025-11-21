@@ -10,28 +10,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AdminReservationModel {
+// ConcreteSubject: 실제 기능을 구현하는 클래스
+public class AdminReservationModel extends Subject {
     
     // 파일 경로
     private static final String FILE_PATH = "src/main/resources/reservation.txt"; 
     
+    // [직접 구현 1] 관찰자 목록을 자식 클래스가 직접 관리함
     private List<ReservationObserver> observers = new ArrayList<>();
+    
     private List<Reservation> reservationList = new ArrayList<>();
 
+    // [직접 구현 2] 부모의 추상 메서드 구현 (@Override)
+    @Override
     public void addObserver(ReservationObserver observer) {
         observers.add(observer);
     }
 
-    // [중요] 관찰자들에게 변경 사실 알림
-    public void notifyObservers(List<Reservation> dataToShow) { 
+    @Override
+    public void removeObserver(ReservationObserver observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers(List<Reservation> dataToShow) {
         for (ReservationObserver observer : observers) {
             observer.onReservationUpdated(dataToShow);
         }
-    }
-    
-    // 현재 전체 리스트 반환 (필요시 사용)
-    public List<Reservation> getAllReservations() {
-        return reservationList;
     }
 
     // --- 비즈니스 로직 ---
