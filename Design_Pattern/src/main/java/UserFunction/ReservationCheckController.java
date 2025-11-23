@@ -16,6 +16,7 @@ import java.util.StringTokenizer;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import Reservation.ReservationCheckView;
+import java.util.ArrayList;
 
 public class ReservationCheckController {
 
@@ -44,6 +45,9 @@ public class ReservationCheckController {
         String selectedType = view.getSelectedRoomType(); // 예: 실습실
         String selectedNum = view.getSelectedRoomNum();   // 예: 911
 
+        ArrayList<ArrayList<String>> selectedValueTable = new ArrayList<>();
+        int loopnum = 0;
+
         //테스트용
         System.out.println(selectedDate + selectedNum + selectedType);
 
@@ -54,9 +58,9 @@ public class ReservationCheckController {
         clearTable();
 
         // 3. 파일 읽기
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)))) {
             String line;
-            while ((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null) { // 한줄씩 읽는 반복문임
                 // 콤마(,)로 데이터 분리
                 // 파일형식: 333,학생,김씨,학과,실습실,911,2025-11-26,수,19:40,20:25,면담,예약대기
                 // 인덱스:   0    1    2    3     4     5       6      7    8     9    10    11
@@ -68,21 +72,45 @@ public class ReservationCheckController {
                     System.out.println(s);
                 }
                  */
+                System.out.println("test 위치 1");
+
                 if (data.length < 12) {
                     continue; // 데이터 깨진 줄 건너뜀
                 }
                 String fileRoomType = data[4].trim();
                 String fileRoomNum = data[5].trim();
                 String fileDate = data[6].trim();
+                //fileDate = fileDate.replace("\uFEFF", "").trim();
                 String fileDay = data[7].trim();      // 요일 (월, 화...)
                 String fileStartTime = data[8].trim(); // 시작 시간 (13:00)
                 String fileStatus = data[11].trim();   // 상태 (예약대기, 거절, 취소 등)
 
-                //테스트용
-                System.out.println(fileRoomType + fileRoomNum + fileDate + fileDay + fileStartTime + fileStatus);
+                System.out.println("test 위치 1.5" + loopnum);
 
+                System.out.println("selectedDate = [" + selectedDate + "]");
+                System.out.println("fileDate     = [" + fileDate + "]");
+                System.out.println("equal?       = " + selectedDate.equals(fileDate));
+                System.out.println("trim equal?  = " + selectedDate.trim().equals(fileDate.trim()));
+
+                if (selectedNum.equals(fileRoomNum) && selectedDate.trim().equals(fileDate.trim())) {
+                    if (fileStatus.equals("승인") || fileStatus.equals("예약확정")) {
+                        selectedValueTable.add(new ArrayList<>()); 
+                    selectedValueTable.get(loopnum).add(fileRoomType);
+                    selectedValueTable.get(loopnum).add(fileRoomNum);
+                    selectedValueTable.get(loopnum).add(fileDate);
+                    selectedValueTable.get(loopnum).add(fileDay);
+                    selectedValueTable.get(loopnum).add(fileStartTime);
+                    selectedValueTable.get(loopnum).add(fileStatus);
+
+                    loopnum += 1;
+                    }
+                }
+
+                System.out.println("test 위치 2");
+                /*
+                //테스트용
                 DefaultTableModel model = (DefaultTableModel) view.getTimeTable().getModel();
-                
+
                 // 4. 필터링 로직
                 // 방 타입, 방 번호, 그리고 '날짜'가 선택한 것과 똑같아야 함
                 boolean isRoomMatch = fileRoomType.equals(selectedType) && fileRoomNum.equals(selectedNum);
@@ -97,14 +125,66 @@ public class ReservationCheckController {
                     int colIndex = getDayColumnIndex(fileDay);     // 요일 -> 열
 
                     if (rowIndex != -1 && colIndex != -1) {
-                        // 6. 테이블에 값 넣기 (예: "예약중(김씨)")
-                        if (data[11].equals("예약확정") && data[11].equals("승인")) {
-                            String cellText = "사용중"; // 목적 + 이름
-                            view.getTimeTable().setValueAt(cellText, rowIndex, colIndex);
+
+                        // [수정된 부분] 상태에 따라 표시할 텍스트 결정
+                        String displayText = "";
+
+                        if (fileStatus.equals("예약대기")) {
+                            displayText = "<html><font color='gray'>[대기]</font><br></html>";
+                        } else {
+                            // 예약확정, 승인 등
+                            displayText = "<html><font color='blue'>[사용중]</font><br></html>";
                         }
+
+                        // 테이블에 값 넣기
+                        view.getTimeTable().setValueAt(displayText, rowIndex, colIndex);
+
+                        // 디버깅용 출력 (제대로 들어갔는지 확인)
+                        System.out.println("테이블 입력 성공: " + fileStartTime + " / " + fileDay + " -> " + displayText);
                     }
                 }
+                 */
             }
+            System.out.println("test 위치 3");
+
+            for (int i = 0; i < selectedValueTable.size(); i++) {
+                for (int j = 0; j < selectedValueTable.get(i).size(); j++) {
+                    System.out.print(selectedValueTable.get(i).get(j) + " ");
+                }
+                System.out.println();
+            }
+
+            DefaultTableModel model = (DefaultTableModel) view.getTimeTable().getModel();
+
+            // 수집된 예약 데이터 리스트를 하나씩 꺼냅니다.
+            for (ArrayList<String> record : selectedValueTable) {
+                // 위에서 add한 순서: 0:Type, 1:Num, 2:Date, 3:Day, 4:Time, 5:Status
+                String day = record.get(3);       // 요일 (예: "수") -> 열(Column) 결정
+                String startTime = record.get(4); // 시간 (예: "19:00") -> 행(Row) 결정
+                String status = record.get(5);    // 상태 (예: "승인", "예약대기")
+
+                // 1. 행/열 인덱스 구하기 (helper 메서드 사용)
+                int rowIndex = getTimeRowIndex(startTime);
+                int colIndex = getDayColumnIndex(day);
+
+                // 2. 유효한 인덱스인지 확인 후 값 넣기
+                if (rowIndex != -1 && colIndex != -1) {
+                    String displayText;
+
+                    // 상태에 따라 텍스트 다르게 표시 (HTML 태그로 색상/줄바꿈 적용)
+                    if ("예약대기".equals(status)) {
+                        displayText = "<html><font color='gray'>[대기]</font></html>";
+                    } else {
+                        displayText = "<html><font color='blue'>[사용중]</font></html>";
+                    }
+
+                    // 테이블의 해당 좌표에 값 설정
+                    model.setValueAt(displayText, rowIndex, colIndex);
+                }
+            }
+
+            System.out.println("test 위치 4");
+
         } catch (Exception e) {
             System.out.println("파일 로드 중 오류: " + e.getMessage());
             // e.printStackTrace(); // 디버깅용
