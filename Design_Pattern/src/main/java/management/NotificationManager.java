@@ -16,9 +16,13 @@ public class NotificationManager {
 
     // --- [관리자용] 알림 보내기 ---
     public void sendNotification(String studentId, String message) {
+        // [핵심 수정] 메시지 내용 중에 줄바꿈(\n)이 있으면 파일이 깨지므로 공백으로 변경!
+        String safeMessage = message.replace("\n", " "); 
+        
         String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        // 포맷: 학번,메시지,시간,읽음여부(FALSE)
-        String line = String.format("%s,%s,%s,FALSE", studentId, message, time);
+        
+        // 수정된 safeMessage를 저장
+        String line = String.format("%s,%s,%s,FALSE", studentId.trim(), safeMessage, time);
 
         File file = new File(FILE_PATH);
         if (!file.getParentFile().exists()) file.getParentFile().mkdirs();

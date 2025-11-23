@@ -222,6 +222,12 @@ public class ReservationGUIController {
         
         view.addReserveButtonListener(
                 e -> {
+                    //  예약 제한 사용자 체크 (가장 먼저 실행!)
+                    if (isUserBanned(userId)) {
+                        view.showMessage("현재 예약 권한이 제한된 상태입니다.\n관리자에게 문의하세요.");
+                        return; // 예약 진행 중단 (여기서 끝냄)
+                    }
+                    
                     // 1. 선택 정보 가져오기
                     String date = view.getSelectedDate();
                     List<String> times = view.getSelectedTimes();
@@ -578,5 +584,21 @@ public class ReservationGUIController {
         } catch (IOException e) {
             System.out.println(" 사용자 정보 요청 실패: " + e.getMessage());
         }
+    }
+    
+    // [추가] 제한된 사용자인지 확인하는 메서드
+    public boolean isUserBanned(String studentId) {
+        String banFile = "src/main/resources/banlist.txt";
+        try (BufferedReader br = new BufferedReader(new FileReader(banFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().equals(studentId)) {
+                    return true; // 제한된 사용자임
+                }
+            }
+        } catch (IOException e) {
+            // 파일이 없으면 제한 없는 것으로 간주
+        }
+        return false;
     }
 }

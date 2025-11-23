@@ -38,6 +38,11 @@ public class AdminReservationModel extends Subject {
             observer.onReservationUpdated(dataToShow);
         }
     }
+    
+    // 외부에서 전체 예약 리스트를 가져갈 수 있게 해줌
+    public List<Reservation> getAllReservations() {
+        return reservationList;
+    }
 
     // --- 비즈니스 로직 ---
 
