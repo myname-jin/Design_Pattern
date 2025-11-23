@@ -75,10 +75,10 @@ public class UserReservationListController {
 
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
-               if (parts.length >= 12 && parts[2].equals(userId)) {
+               if (parts.length >= 12 && parts[0].equals(userId)) {
              model.addRow(new Object[]{
-                parts[0], // 이름
-                parts[2], // 학번
+                parts[2], // 이름
+                parts[0], // 학번
                 parts[5], // 강의실
                 parts[6], // 날짜 (추가)
                 parts[7], // 요일

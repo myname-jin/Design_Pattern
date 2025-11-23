@@ -49,6 +49,59 @@ public abstract class AbstractReservation {
     private RoomModel selectedRoom;
 
     /*
+     public final void doReservation(String userId, String userType, String userName, String userDept, String date, List<String> times, String purpose, String time, String selectedRoomName, ReservationView view) {
+        this.view = view;
+        loadRoomsFromExcel();
+        getUserInfo(date, times, purpose, time, selectedRoomName);
+        
+        if (checkAllSelected(date, times, purpose, time) == false) {
+            return;
+        }
+        
+        if (isUserBanned(userId, userType) == true) {
+            return;
+        }
+        if (isTimeSlotAlreadyReserved(selectedRoomName, date, times, userId)) { // 🚨 반환 값 확인
+            view.showMessage("선택한 시간대에 이미 예약이 존재합니다."); // 메시지 표시
+            return; // 🛑 중복 시 예약 중단
+        }
+        if (isUserTypeStudent(userType) == true) {
+            if (!studentConstraints(userId, date, times)) { // 🚨 반환 값 확인
+                return; // 🛑 학생 제약 조건 불충족 시 예약 중단
+            }
+        }
+        saveReservationsForTimes(times, selectedRoomName, date, purpose, userName, userType, userId, userDept);
+
+    }
+     */
+    public final void doReservation(String userId, String userType, String userName, String userDept, String date, List<String> times, String purpose, String time, String selectedRoomName, ReservationView view) {
+        this.view = view;
+        loadRoomsFromExcel();
+        getUserInfo(date, times, purpose, time, selectedRoomName);
+
+        // 1. 요청 객체 생성
+        ReservationRequest request = new ReservationRequest(userId, userType, date, times, selectedRoomName, purpose);
+
+        // 2. 책임 연쇄 구성 (순서대로 연결)
+        ReservationCheckHandler chain = new CheckAllSelectedHandler();
+        chain.setNext(new CheckUserBannedHandler())
+                .setNext(new CheckTimeSlotReservedHandler())
+                .setNext(new CheckStudentConstraintsHandler());
+
+        try {
+            // 3. 검증 체인 실행
+            chain.check(request);
+
+            // 4. 모든 검증 통과 시 예약 저장 수행
+            saveReservationsForTimes(times, selectedRoomName, date, purpose, userName, userType, userId, userDept);
+
+        } catch (Exception e) {
+            // 5. 어느 핸들러에서든 실패하면 예외 메시지를 View에 표시하고 중단
+            view.showMessage(e.getMessage());
+        }
+    }
+
+    /*
     public final void doReservation(String userId, String userType, String userName, String userDept, String date, List<String> times, String purpose, String time, String selectedRoomName, ReservationView view) {
         this.view = view;// -> 이렇게 해도 되나?
         loadRoomsFromExcel();
@@ -57,8 +110,8 @@ public abstract class AbstractReservation {
         if (checkAllSelected(date, times, purpose, time) == false) {
             return;
         }
-         */
-         /*
+     */
+ /*
         if (isUserBanned(userId, userType) == true) {
             return;
         }
@@ -109,7 +162,7 @@ public abstract class AbstractReservation {
         
          // 결과 뷰 표시
         viewReservationResult(userType);
-    }*/
+    }
     
     public final void doReservation(String userId, String userType, String userName, String userDept, String date, List<String> times, String purpose, String time, String selectedRoomName, ReservationView view) {
         this.view = view;
@@ -203,9 +256,9 @@ public abstract class AbstractReservation {
         }
 
         return false;
-    }
+    }*/
 
-    /*
+ /*
 - getUserInfo
 - checkAllSelected
 - abstract isUserBanned(userId)
@@ -293,7 +346,6 @@ public abstract class AbstractReservation {
         return false;
     }
 
-    /*
     private boolean isTimeSlotAlreadyReserved(String roomName, String date, List<String> newTimes, String userId) {
         String path = "src/main/resources/reservation.txt";
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
@@ -309,8 +361,10 @@ public abstract class AbstractReservation {
                     String reservedStart = parts[8];
                     String reservedEnd = parts[9];
 
-                    if (reservedUserId.equals(userId)) continue;
-                    
+                    if (reservedUserId.equals(userId)) {
+                        continue;
+                    }
+
                     if (reservedRoom.equals(roomName) && reservedDate.equals(date)) {
                         Date reservedStartTime = sdf.parse(reservedStart);
                         Date reservedEndTime = sdf.parse(reservedEnd);
@@ -336,8 +390,7 @@ public abstract class AbstractReservation {
 
         return false;
     }
-    */
-    
+
     private boolean isRoomAvailable(String roomName, String date, List<String> times) {
         for (String timeSlot : times) {
             String[] split = timeSlot.split("~");
@@ -413,15 +466,20 @@ public abstract class AbstractReservation {
             if (split.length == 2) {
                 String startTime = split[0].trim();
                 String endTime = split[1].trim();
-                
+
                 RoomCapacity.getInstance().addReservation(selectedRoomName, date, startTime, endTime);
 
-                saveReservation(userName, userType, userId, userDept,
+                saveReservation(userId, userType, userName, userDept,
                         selectedRoom.getType(), selectedRoom.getName(),
                         date, dayOfWeek, startTime, endTime, purpose, status);
-                
-                view.showMessage(status + "상태입니다.");
-                
+
+                if (status.equals("예약대기")) {
+                    view.showMessage("예약이 등록되었습니다. 관리자의 승인을 기다리는 중입니다.");
+                } else if (status.equals("예약확정")) {
+                    view.showMessage("예약이 확정되었습니다.");
+                }
+                //view.showMessage(status + "상태입니다.");
+
             }
         }
     }
