@@ -15,11 +15,15 @@ import java.io.*;
 import java.net.Socket;
 import Reservation.ReservationGUIController;
 import Reservation.ReservationView;
+import Reservation.ReservationCheckView;
+import java.awt.event.ActionEvent; // [추가] 이벤트 처리를 위해 필요
+import java.awt.event.ActionListener; // [추가] 이벤트 처리를 위해 필요
 
 // [추가] 알림 감시자 매니저
-import management.NotificationManager; 
+import management.NotificationManager;
 
 public class UserMainController {
+
     private UserMainModel model;
     private UserMainView view;
 
@@ -28,16 +32,16 @@ public class UserMainController {
     private Socket socket;
     private BufferedReader in;
     private BufferedWriter out;
-    
+
     // [추가] 알림 감시자 인스턴스
     private NotificationManager notiManager = new NotificationManager();
 
     public UserMainController(String userId, String userType, Socket socket, BufferedReader in, BufferedWriter _out) {
         this.socket = socket;
         this.in = in;
-        
+
         // [충돌 해결 1] writer(_out)를 저장해야 커맨드 패턴이 작동함
-        this.out = _out; 
+        this.out = _out;
 
         String userName = "알수없음";
         String userDept = "-";
@@ -46,7 +50,7 @@ public class UserMainController {
         try {
             // [충돌 해결 2] InfoRequestCommand에 out 주입
             ServerClient.CommandProcessor.getInstance().addCommand(
-                new ServerClient.InfoRequestCommand(out, userId)
+                    new ServerClient.InfoRequestCommand(out, userId)
             );
 
             String response = in.readLine();
@@ -71,14 +75,14 @@ public class UserMainController {
 
         if (socket != null && out != null) {
             // [충돌 해결 3] LogoutUtil에 out 전달
-            LogoutUtil.attach(view, userId, out); 
+            LogoutUtil.attach(view, userId, out);
         }
-        
+
         // [충돌 해결 4] 알림 감시자 시작 코드는 살려둠
         // ===============================================================
         // [핵심] 알림 감시자 시작 (3초마다 파일 체크)
         // ===============================================================
-        notiManager.startMonitoring(userId); 
+        notiManager.startMonitoring(userId);
         // ===============================================================
 
         view.setVisible(true);
@@ -88,23 +92,23 @@ public class UserMainController {
         try {
             // [충돌 해결 5] NotificationController에도 out 전달 (일관성 유지)
             notificationController = NotificationController.getInstance(
-                model.getUserId(),
-                model.getUserType(),
-                model.getSocket(),
-                model.getIn(),
-                model.getOut() 
+                    model.getUserId(),
+                    model.getUserType(),
+                    model.getSocket(),
+                    model.getIn(),
+                    model.getOut()
             );
-            
+
             notificationButton = new NotificationButton(
-                model.getUserId(), 
-                model.getUserType(), 
-                model.getSocket(), 
-                model.getIn(), 
-                model.getOut()
+                    model.getUserId(),
+                    model.getUserType(),
+                    model.getSocket(),
+                    model.getIn(),
+                    model.getOut()
             );
-            
+
             view.setNotificationButton(notificationButton);
-            
+
         } catch (Exception e) {
             System.err.println("알림 시스템 초기화 실패: " + e.getMessage());
         }
@@ -115,6 +119,23 @@ public class UserMainController {
         view.addCreateReservationListener(e -> openReservationSystem());
         view.addNoticeListener(e -> openNoticeSystem());
         view.addLogoutListener(e -> handleLogout());
+        view.addReservationCheckListener(e -> openReservationCheckSystem());
+    }
+
+    private void openReservationCheckSystem() {
+        view.setVisible(false);
+
+        ReservationCheckView checkview = new ReservationCheckView();
+        new ReservationCheckController(checkview);
+        checkview.setVisible(true);
+
+        checkview.addGoBackListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                checkview.dispose(); // 현황 조회 창 닫기
+                view.setVisible(true); // 메인 화면 다시 보이기
+            }
+        });
     }
 
     private void openReservationList() {
@@ -131,10 +152,10 @@ public class UserMainController {
             view.showMessage("강의실 예약 시스템으로 연결됩니다", "안내", JOptionPane.INFORMATION_MESSAGE);
             // [충돌 해결 7] null 대신 out 전달
             new ReservationGUIController(model.getUserId(), model.getUserName(), model.getUserDept(),
-                                         model.getUserType(), model.getSocket(), model.getIn(), out);
+                    model.getUserType(), model.getSocket(), model.getIn(), out);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "예약 시스템 연결 중 오류: " + e.getMessage(),
-                                          "오류", JOptionPane.ERROR_MESSAGE);
+                    "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -145,7 +166,7 @@ public class UserMainController {
             new UserNoticeController(model.getUserId(), model.getSocket(), model.getIn(), out);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "공지사항 시스템 연결 중 오류: " + e.getMessage(),
-                                          "오류", JOptionPane.ERROR_MESSAGE);
+                    "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -155,15 +176,18 @@ public class UserMainController {
         if (result == JOptionPane.YES_OPTION) {
             // [충돌 해결 9] 알림 감시자 중단 (ad4a9... 변경 사항)
             notiManager.stopMonitoring();
-            
+
             // 🔽 1. 서버에 로그아웃 메시지 전송 (HEAD 변경 사항: writer 주입)
             try {
                 ServerClient.CommandProcessor.getInstance().addCommand(
-                    new ServerClient.LogoutCommand(out, model.getUserId()) 
+                        new ServerClient.LogoutCommand(out, model.getUserId())
                 );
-                
+
                 // ⭐️ [핵심 수정] 메시지가 전송될 때까지 0.5초만 기다려줍니다.
-                try { Thread.sleep(500); } catch (InterruptedException e) {} 
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                }
 
                 socket.close();  // 소켓 종료
             } catch (IOException e) {
@@ -172,18 +196,22 @@ public class UserMainController {
 
             // 🔽 2. 알림 시스템 정리 + 화면 전환
             shutdownNotificationSystem();
-            ServerClient.CommandProcessor.resetInstance(); 
-            view.dispose(); 
+            ServerClient.CommandProcessor.resetInstance();
+            view.dispose();
 
             // 🔁 3. 서버 재연결 화면으로 이동
-            new login.ConnectView();  
+            new login.ConnectView();
         }
     }
 
     private void shutdownNotificationSystem() {
         try {
-            if (notificationController != null) notificationController.shutdown();
-            if (notificationButton != null) notificationButton.shutdown();
+            if (notificationController != null) {
+                notificationController.shutdown();
+            }
+            if (notificationButton != null) {
+                notificationButton.shutdown();
+            }
         } catch (Exception e) {
             System.err.println("알림 시스템 종료 오류: " + e.getMessage());
         }
