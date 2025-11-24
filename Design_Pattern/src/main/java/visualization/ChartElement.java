@@ -10,6 +10,6 @@ package visualization;
  */
 import java.awt.Graphics;
 
-public interface ChartElement {
-    void draw(Graphics g, int x, int y, int width, int height, int count, String label);
+public abstract class ChartElement {
+    public abstract void draw(Graphics g, int x, int y, int width, int height, int count, String label);
 }

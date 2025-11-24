@@ -10,7 +10,7 @@ package visualization;
  */
 import java.awt.*;
 
-public class BasicBar implements ChartElement {
+public class BasicBar extends ChartElement {
     @Override
     public void draw(Graphics g, int x, int y, int width, int height, int count, String label) {
         g.setColor(Color.LIGHT_GRAY);

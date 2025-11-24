@@ -19,7 +19,7 @@ public class LabDecorator extends BarDecorator {
     @Override
     public void draw(Graphics g, int x, int y, int width, int height, int count, String label) {
         // 1. 부모(BasicBar)가 먼저 기본 형태를 그림
-        super.draw(g, x, y, width, height, count, label);
+        this.wrappedElement.draw(g, x, y, width, height, count, label);
         
         // 2. 실습실 색상 (주황색) 덮어쓰기
         g.setColor(new Color(255, 165, 0)); 

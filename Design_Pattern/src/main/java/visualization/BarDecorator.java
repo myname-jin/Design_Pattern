@@ -10,7 +10,7 @@ package visualization;
  */
 import java.awt.Graphics;
 
-public abstract class BarDecorator implements ChartElement {
+public abstract class BarDecorator extends ChartElement {
     protected ChartElement wrappedElement; 
 
     public BarDecorator(ChartElement element) {
@@ -18,7 +18,6 @@ public abstract class BarDecorator implements ChartElement {
     }
 
     @Override
-    public void draw(Graphics g, int x, int y, int width, int height, int count, String label) {
-        wrappedElement.draw(g, x, y, width, height, count, label);
+public abstract void draw(Graphics g, int x, int y, int width, int height, int count, String label);        
     }
-}
+

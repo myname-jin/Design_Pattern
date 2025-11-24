@@ -17,7 +17,7 @@ public class LectureDecorator extends BarDecorator {
 
     @Override
     public void draw(Graphics g, int x, int y, int width, int height, int count, String label) {
-        super.draw(g, x, y, width, height, count, label);
+        this.wrappedElement.draw(g, x, y, width, height, count, label);
         
         g.setColor(new Color(100, 149, 237)); 
         g.fillRect(x, y, width, height);
