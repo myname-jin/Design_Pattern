@@ -1,40 +1,54 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package management;
 
-import management.UserStatsModel;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- *
- * @author suk22
+ * UserStatsModel 단위 테스트
+ * (통계 데이터 객체의 생성 및 조회 로직 검증)
  */
 public class UserStatsModelTest {
 
+    private UserStatsModel instance; 
+
+    @BeforeEach
+    public void setUp() {
+        instance = new UserStatsModel("홍길동", "20230001", 10, 3, "개인 사정; 중복 예약");
+    }
+
+    @AfterEach
+    public void tearDown() {
+    }
+
     @Test
-    void testUserStatsModelCreationAndGetters() {
-        String expectedName = "홍길동";
-        String expectedUserId = "user01";
-        int expectedReservationCount = 3;
-        int expectedCancelCount = 2;
-        String expectedCancelReason = "개인 사정; 중복 예약";
+    public void testGetName() {
+        System.out.println("getName");
+        assertEquals("홍길동", instance.getName());
+    }
 
-        UserStatsModel model = new UserStatsModel(
-                expectedName,
-                expectedUserId,
-                expectedReservationCount,
-                expectedCancelCount,
-                expectedCancelReason
-        );
+    @Test
+    public void testGetUserId() {
+        System.out.println("getUserId");
+        assertEquals("20230001", instance.getUserId());
+    }
 
-        assertEquals(expectedName, model.getName());
-        assertEquals(expectedUserId, model.getUserId());
-        assertEquals(expectedReservationCount, model.getReservationCount());
-        assertEquals(expectedCancelCount, model.getCancelCount());
-        assertEquals(expectedCancelReason, model.getCancelReason());
+    @Test
+    public void testGetReservationCount() {
+        System.out.println("getReservationCount");
+        assertEquals(10, instance.getReservationCount());
+    }
+
+    @Test
+    public void testGetCancelCount() {
+        System.out.println("getCancelCount");
+        assertEquals(3, instance.getCancelCount());
+    }
+
+    @Test
+    public void testGetCancelReason() {
+        System.out.println("getCancelReason");
+        assertEquals("개인 사정; 중복 예약", instance.getCancelReason());
     }
 }

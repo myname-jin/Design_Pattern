@@ -9,8 +9,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class BackupManager {
 
-    private static final String ORIGINAL_FILE = "src/main/resources/reservation.txt";
-    private static final String BACKUP_DIR = "backups";
+    private static String ORIGINAL_FILE = "src/main/resources/reservation.txt";
+    private static String BACKUP_DIR = "backups";
 
     public BackupManager() {
         File dir = new File(BACKUP_DIR);
@@ -41,7 +41,7 @@ public class BackupManager {
         }
     }
 
-    // [수정됨] 복구 기능 (반환 타입: String)
+    // 복구 기능 (반환 타입: String)
     public String performRestore() {
         JFileChooser fileChooser = new JFileChooser(BACKUP_DIR);
         fileChooser.setDialogTitle("복구할 백업 파일을 선택하세요");
@@ -49,7 +49,6 @@ public class BackupManager {
 
         int userSelection = fileChooser.showOpenDialog(null);
 
-        // 사용자가 파일을 선택하고 [열기]를 눌렀을 때
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File backupFile = fileChooser.getSelectedFile();
             
@@ -60,15 +59,15 @@ public class BackupManager {
                 // 백업 파일을 원본 위치로 덮어쓰기
                 Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
                 
-                return "성공: 데이터가 복구되었습니다."; // 성공 메시지 리턴
+                return "성공: 데이터가 복구되었습니다."; 
                 
             } catch (IOException e) {
                 e.printStackTrace();
-                return "실패: " + e.getMessage(); // 에러 메시지 리턴
+                return "실패: " + e.getMessage(); 
             }
         }
         
-        // 사용자가 [취소]를 눌렀을 때
+        // 사용자가 취소 눌렀을 때
         return null; 
     }
 }

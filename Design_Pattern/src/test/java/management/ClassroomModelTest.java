@@ -1,45 +1,78 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package management;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- *
- * @author suk22
+ * ClassroomModel 클래스 단위 테스트
+ * (강의실 데이터 객체의 생성, 수정, 변환 로직 검증)
  */
-public class ClassroomModelTest {
+class ClassroomModelTest {
 
-    @Test
-    void testConstructorAndGetters() {
-        ClassroomModel classroom = new ClassroomModel("101", "1층", "30", "화이트보드 있음");
-
-        assertEquals("101", classroom.getRoom());
-        assertEquals("1층", classroom.getLocation());
-        assertEquals("30", classroom.getCapacity());
-        assertEquals("화이트보드 있음", classroom.getNote());
+    private ClassroomModel instance; 
+    
+    @BeforeEach
+    public void setUp() throws Exception {
+        instance = new ClassroomModel("915", "프로젝트실(PC 30대)");
     }
 
+    @AfterEach
+    public void tearDown() throws Exception {
+    }
+
+    @Test
+    public void testGetRoom() {
+        System.out.println("getRoom");
+        // setUp에서 설정한 "915"가 나오는지 확인
+        assertEquals("915", instance.getRoom());
+    }
+
+    @Test
+    public void testSetRoom() {
+        System.out.println("setRoom");
+        // 값을 "920"으로 변경하고 잘 바뀌었는지 확인
+        String newRoom = "920";
+        instance.setRoom(newRoom);
+        assertEquals(newRoom, instance.getRoom());
+    }
+
+    @Test
+    public void testGetInfo() {
+        System.out.println("getInfo");
+        // setUp에서 설정한 정보가 나오는지 확인
+        assertEquals("프로젝트실(PC 30대)", instance.getInfo());
+    }
+
+    @Test
+    public void testSetInfo() {
+        System.out.println("setInfo");
+        // 정보를 변경하고 잘 바뀌었는지 확인
+        String newInfo = "수리중";
+        instance.setInfo(newInfo);
+        assertEquals(newInfo, instance.getInfo());
+    }
+
+    /**
+     * toFileString 메서드 테스트
+     * (파일에 저장될 때 "강의실,정보" 형식인지 확인)
+     */
     @Test
     void testToFileString() {
-        ClassroomModel classroom = new ClassroomModel("202", "2층", "40", "빔프로젝터 있음");
-
-        String expected = "202,2층,40,빔프로젝터 있음";
-        assertEquals(expected, classroom.toFileString());
+        System.out.println("toFileString");
+        String expected = "915,프로젝트실(PC 30대)";
+        assertEquals(expected, instance.toFileString());
     }
 
+    /**
+     * toArray 메서드 테스트
+     * (테이블에 표시될 때 Object 배열로 잘 변환되는지 확인)
+     */
     @Test
-    void testEmptyFields() {
-        ClassroomModel classroom = new ClassroomModel("", "", "", "");
-
-        assertEquals("", classroom.getRoom());
-        assertEquals("", classroom.getLocation());
-        assertEquals("", classroom.getCapacity());
-        assertEquals("", classroom.getNote());
-        assertEquals(",,,", classroom.toFileString());
+    public void testToArray() {
+        System.out.println("toArray");
+        Object[] expected = new Object[] {"915", "프로젝트실(PC 30대)"};
+        assertArrayEquals(expected, instance.toArray());
     }
 }

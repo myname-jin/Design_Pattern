@@ -1,182 +1,102 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
-
 package management;
 
 import org.junit.jupiter.api.*;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.file.*;
-import java.util.*;
-
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
+
 /**
- *
- * @author suk22
- 
+ * ReservationMgmtController 단위 테스트
+ * (예약 조회, 승인 변경, 사용자 차단 로직 검증 - Reflection 사용)
+ */
 public class ReservationMgmtControllerTest {
 
-    private static Path tempReservationFile;
-    private static Path tempBanListFile;
+    private Path tempReservationFile;
+    private Path tempBanListFile;
     private ReservationMgmtController controller;
-
-    @BeforeAll
-    static void setupFiles() throws IOException {
-        tempReservationFile = Files.createTempFile("reservation", ".txt");
-        tempBanListFile = Files.createTempFile("banlist", ".txt");
-
-        // 샘플 예약 데이터 입력
-        Files.write(tempReservationFile, List.of(
-                "홍길동,01012345678,20231234,컴퓨터소프트웨어학과,913,A,2025-05-21,B,09:00,10:00,X,승인",
-                "김철수,01087654321,20231235,컴퓨터소프트웨어학과,912,A,2025-05-22,B,11:00,12:00,X,승인"
-        ));
-
-        // 초기 차단 사용자 없음
-        Files.write(tempBanListFile, List.of());
-    }
 
     @BeforeEach
     void setUp() throws Exception {
-        // 테스트용 컨트롤러 생성자를 통해 경로 주입 (생성자 수정이 필요할 수 있음)
-        controller = new ReservationMgmtController() {
-            @Override
-            public List<ReservationMgmtModel> getAllReservations() {
-                return readReservations(tempReservationFile.toString());
-            }
+        tempReservationFile = Files.createTempFile("reservation", ".txt");
+        tempBanListFile = Files.createTempFile("banlist", ".txt");
 
-            @Override
-            public void updateApprovalStatus(String studentId, String newStatus) {
-                updateApprovalStatus(studentId, newStatus, tempReservationFile.toString());
-            }
+        String data1 = "홍길동,X,20231234,컴퓨터공학,913,X,2025-05-21,X,09:00,10:00,X,승인";
+        String data2 = "김철수,X,20231235,전자공학,912,X,2025-05-22,X,11:00,12:00,X,승인";
+        Files.write(tempReservationFile, List.of(data1, data2));
 
-            @Override
-            public List<String> getBannedUsers() {
-                return readBannedUsers(tempBanListFile.toString());
-            }
+        controller = new ReservationMgmtController();
 
-            @Override
-            public void banUser(String studentId) {
-                List<String> list = readBannedUsers(tempBanListFile.toString());
-                if (!list.contains(studentId)) {
-                    list.add(studentId);
-                    writeBannedUsers(list, tempBanListFile.toString());
-                }
-            }
+        // Reflection으로 private static final FILE_PATH 교체
+        replaceFilePath("FILE_PATH", tempReservationFile.toString());
+        replaceFilePath("BAN_LIST_FILE", tempBanListFile.toString());
+    }
 
-            @Override
-            public void unbanUser(String studentId) {
-                List<String> list = readBannedUsers(tempBanListFile.toString());
-                list.remove(studentId);
-                writeBannedUsers(list, tempBanListFile.toString());
-            }
+    // Reflection을 이용한 필드 값 변경 헬퍼 메서드
+    private void replaceFilePath(String fieldName, String newPath) {
+        try {
+            Field field = ReservationMgmtController.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(null, newPath); 
+        } catch (Exception e) {
+            // final 키워드 때문에 변경이 안 될 수도 있음 
+            System.err.println("경고: " + fieldName + " 경로 교체 실패. (소스 코드에서 final 제거 권장)");
+        }
+    }
 
-            @Override
-            public boolean isUserBanned(String studentId) {
-                return readBannedUsers(tempBanListFile.toString()).contains(studentId);
-            }
-
-            @Override
-            public List<ReservationMgmtModel> searchReservations(String name, String studentId, String room) {
-                return super.searchReservations(name, studentId, room);
-            }
-
-            private List<ReservationMgmtModel> readReservations(String filePath) {
-                try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-                    List<ReservationMgmtModel> list = new java.util.ArrayList<>();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        String[] data = line.split(",");
-                        if (data.length >= 12) {
-                            list.add(new ReservationMgmtModel(
-                                    data[0], data[2], data[3], data[4],
-                                    data[6], data[8] + "~" + data[9], data[11]
-                            ));
-                        }
-                    }
-                    return list;
-                } catch (IOException e) {
-                    return List.of();
-                }
-            }
-
-            private void updateApprovalStatus(String studentId, String newStatus, String filePath) {
-                try {
-                    List<String> lines = Files.readAllLines(Path.of(filePath));
-                    List<String> updated = new java.util.ArrayList<>();
-                    for (String line : lines) {
-                        String[] data = line.split(",");
-                        if (data.length >= 12 && data[2].equals(studentId)) {
-                            data[11] = newStatus;
-                            updated.add(String.join(",", data));
-                        } else {
-                            updated.add(line);
-                        }
-                    }
-                    Files.write(Path.of(filePath), updated);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            private List<String> readBannedUsers(String filePath) {
-                try {
-                    return Files.readAllLines(Path.of(filePath));
-                } catch (IOException e) {
-                    return List.of();
-                }
-            }
-
-            private void writeBannedUsers(List<String> list, String filePath) {
-                try {
-                    Files.write(Path.of(filePath), list);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
+    @AfterEach
+    void tearDown() throws IOException {
+        Files.deleteIfExists(tempReservationFile);
+        Files.deleteIfExists(tempBanListFile);
     }
 
     @Test
     void testGetAllReservations() {
         List<ReservationMgmtModel> list = controller.getAllReservations();
+        
+        // 데이터가 제대로 읽혔는지 확인
+        // (만약 0이 나온다면 ReservationMgmtModel 파싱 로직이나 인덱스를 확인해야 함)
         assertEquals(2, list.size());
         assertEquals("홍길동", list.get(0).getName());
-        assertEquals("912", list.get(1).getRoom());
+        assertEquals("김철수", list.get(1).getName());
     }
 
     @Test
     void testUpdateApprovalStatus() {
-        controller.updateApprovalStatus("20231234", "승인");
-        List<ReservationMgmtModel> updated = controller.getAllReservations();
-        assertEquals("승인", updated.get(0).getApproved());
+        // "20231234" 학번의 승인 상태를 "거절"로 변경
+        controller.updateApprovalStatus("20231234", "거절");
+
+        List<ReservationMgmtModel> updatedList = controller.getAllReservations();
+        // 홍길동(0번 인덱스)의 상태가 바뀌었는지 확인
+        assertEquals("거절", updatedList.get(0).getApproved());
     }
 
     @Test
     void testBanAndUnbanUser() {
         String studentId = "20231234";
+
+        // 처음엔 차단 안 됨
         assertFalse(controller.isUserBanned(studentId));
 
-        controller.banUser(studentId);
+        // 차단 실행 (이름, 학과 등은 더미 데이터)
+        controller.banUser(studentId, "홍길동", "컴공", "학생");
         assertTrue(controller.isUserBanned(studentId));
 
+        // 차단 해제 실행
         controller.unbanUser(studentId);
         assertFalse(controller.isUserBanned(studentId));
     }
 
     @Test
     void testSearchReservations() {
+        // 이름 검색
         List<ReservationMgmtModel> result = controller.searchReservations("김철수", null, null);
         assertEquals(1, result.size());
         assertEquals("김철수", result.get(0).getName());
 
+        // 없는 데이터 검색
         List<ReservationMgmtModel> none = controller.searchReservations(null, "999999", null);
         assertTrue(none.isEmpty());
     }
-
-    @AfterAll
-    static void cleanup() throws IOException {
-        Files.deleteIfExists(tempReservationFile);
-        Files.deleteIfExists(tempBanListFile);
-    }
 }
-*/

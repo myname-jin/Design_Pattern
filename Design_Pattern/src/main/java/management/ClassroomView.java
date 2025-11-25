@@ -1,74 +1,45 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package management;
 
-import management.ReservationMgmtView;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import management.ClassroomModel;
-import management.ClassroomController;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.List;
-import javax.swing.JOptionPane;
 
-/**
- *
- * @author suk22
- */
 public class ClassroomView extends javax.swing.JFrame {
 
     private ClassroomController controller;
 
-    /**
-     * Creates new form ClassroomView
-     */
     public ClassroomView() {
         initComponents();
+        
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         controller = new ClassroomController(model);
 
-        List<ClassroomModel> classrooms = controller.getClassroomList();
-        for (ClassroomModel c : classrooms) {
-            model.addRow(new Object[]{c.getRoom(), c.getLocation(), c.getCapacity(), c.getNote()});
-        }
+        refreshTable();
+        
+        jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int row = jTable1.getSelectedRow();
+                if (row != -1) {
+                    String room = (String) jTable1.getValueAt(row, 0);
+                    String info = (String) jTable1.getValueAt(row, 1);
+                    
+                    jComboBox1.setSelectedItem(room);
+                    jTextField1.setText(info);
+                }
+            }
+        });
+        
+        setLocationRelativeTo(null);
     }
 
-    private boolean validateInputs(String location, String capacity) {
-        if (location.isEmpty() && capacity.isEmpty()) {
-            showMessage("위치와 수용 인원을 입력하세요.");
-            return false;
+    // 테이블 새로고침
+    private void refreshTable() {
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        model.setRowCount(0);
+        List<ClassroomModel> list = controller.getClassroomList();
+        for (ClassroomModel c : list) {
+            model.addRow(c.toArray());
         }
-        if (location.isEmpty()) {
-            showMessage("위치를 입력하세요.");
-            return false;
-        }
-        if (capacity.isEmpty()) {
-            showMessage("수용 인원을 입력하세요.");
-            return false;
-        }
-        try {
-            Integer.parseInt(capacity);
-        } catch (NumberFormatException e) {
-            showMessage("수용 인원은 숫자로 입력하세요.");
-            return false;
-        }
-        return true;
-    }
-
-    private void showMessage(String message) {
-        JOptionPane.showMessageDialog(this, message);
-    }
-
-    private ClassroomModel getClassroomFromInputs() {
-        String room = (String) jComboBox1.getSelectedItem();
-        String location = jTextField1.getText().trim();
-        String capacity = jTextField2.getText().trim();
-        String note = jTextField3.getText().trim();
-        return new ClassroomModel(room, location, capacity, note);
-
     }
 
     /**
@@ -85,14 +56,10 @@ public class ClassroomView extends javax.swing.JFrame {
         jTable1 = new javax.swing.JTable();
         jComboBox1 = new javax.swing.JComboBox<>();
         jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
-        jTextField3 = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         jButton4 = new javax.swing.JButton();
@@ -104,17 +71,17 @@ public class ClassroomView extends javax.swing.JFrame {
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-
+                {null, null}
             },
             new String [] {
-                "강의실", "위치", "수용 인원", "비고"
+                "강의실", "강의실 정보"
             }
         ));
         jScrollPane1.setViewportView(jTable1);
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "908", "911", "912", "913", "914", "915", "916", "918" }));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "911", "912", "913", "914", "915", "916", "918" }));
 
-        jButton1.setText("추가");
+        jButton1.setText("등록");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -135,11 +102,7 @@ public class ClassroomView extends javax.swing.JFrame {
             }
         });
 
-        jLabel2.setText("위치");
-
-        jLabel3.setText("수용 인원");
-
-        jLabel4.setText("비고");
+        jLabel2.setText("강의실 정보 입력");
 
         jLabel5.setText("강의실");
 
@@ -169,22 +132,13 @@ public class ClassroomView extends javax.swing.JFrame {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGap(6, 6, 6)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                             .addComponent(jLabel5))
-                                        .addGap(37, 37, 37)
+                                        .addGap(43, 43, 43)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jLabel2))
-                                        .addGap(46, 46, 46)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jLabel3))
-                                        .addGap(34, 34, 34)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel4)
-                                            .addComponent(jTextField3)))))
+                                            .addComponent(jLabel2)
+                                            .addComponent(jTextField1)))))
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(109, 109, 109)
                                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -210,15 +164,11 @@ public class ClassroomView extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(jLabel3)
-                    .addComponent(jLabel4)
                     .addComponent(jLabel5))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -233,64 +183,58 @@ public class ClassroomView extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        ClassroomModel classroom = getClassroomFromInputs();
-        if (!validateInputs(classroom.getLocation(), classroom.getCapacity())) {
+        String room = (String) jComboBox1.getSelectedItem();
+        String info = jTextField1.getText().trim();
+        
+        if (info.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "강의실 정보를 입력하세요.");
             return;
         }
-        String result = controller.addClassroom(classroom);
-        if (result != null) {
-            showMessage(result); // 중복 등 에러 메시지
-            return;
+        
+        String error = controller.addClassroom(new ClassroomModel(room, info));
+        if (error != null) {
+            JOptionPane.showMessageDialog(this, error, "오류", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "등록되었습니다.");
+            refreshTable();
+            jTextField1.setText("");
         }
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.addRow(new Object[]{classroom.getRoom(), classroom.getLocation(), classroom.getCapacity(), classroom.getNote()});
-        showMessage("강의실 정보가 추가되었습니다.");
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        int selectedRow = jTable1.getSelectedRow();
-        if (selectedRow == -1) {
-            showMessage("수정할 행을 선택하세요.");
+        int row = jTable1.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "수정할 강의실을 선택하세요.");
             return;
         }
-
-        ClassroomModel classroom = getClassroomFromInputs();
-        String room = (String) jTable1.getValueAt(selectedRow, 0); // 기존 room 유지
-        classroom.setRoom(room);
-
-        if (!validateInputs(classroom.getLocation(), classroom.getCapacity())) {
-            return;
-        }
-
-        controller.updateClassroom(classroom);
-
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.setValueAt(classroom.getLocation(), selectedRow, 1);
-        model.setValueAt(classroom.getCapacity(), selectedRow, 2);
-        model.setValueAt(classroom.getNote(), selectedRow, 3);
-
-        showMessage(room + " 강의실 정보가 수정되었습니다.");
+        
+        String room = (String) jComboBox1.getSelectedItem(); 
+        String info = jTextField1.getText().trim();
+        
+        controller.updateClassroom(new ClassroomModel(room, info));
+        refreshTable();
+        jTextField1.setText("");
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        int selectedRow = jTable1.getSelectedRow();
-        if (selectedRow == -1) {
-            showMessage("삭제할 행을 선택하세요.");
+        int row = jTable1.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "삭제할 강의실을 선택하세요.");
             return;
         }
-
-        String room = (String) jTable1.getValueAt(selectedRow, 0);
-        int confirm = JOptionPane.showConfirmDialog(this, room + " 강의실을 삭제하시겠습니까?", "삭제 확인", JOptionPane.YES_NO_OPTION);
-
+        
+        String room = (String) jTable1.getValueAt(row, 0);
+        int confirm = JOptionPane.showConfirmDialog(this, room + " 강의실 정보를 삭제하시겠습니까?", "확인", JOptionPane.YES_NO_OPTION);
+        
         if (confirm == JOptionPane.YES_OPTION) {
             controller.deleteClassroom(room);
+            refreshTable();
+            jTextField1.setText("");
         }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        ReservationMgmtView view = new ReservationMgmtView();
-        view.setLocationRelativeTo(null);
-        view.setVisible(true);
+       new ReservationMgmtView().setVisible(true);
         this.dispose();
     }//GEN-LAST:event_jButton4ActionPerformed
 
@@ -302,14 +246,10 @@ public class ClassroomView extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTable jTable1;
     private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
     // End of variables declaration//GEN-END:variables
 }

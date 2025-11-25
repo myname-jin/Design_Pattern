@@ -1,60 +1,38 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package management;
 
-/**
- *
- * @author suk22
- */
 public class ClassroomModel {
 
-    private String room;
-    private String location;
-    private String capacity;
-    private String note;
+    private String room; // 강의실 번호 (Key)
+    private String info; // 강의실 정보 (비고)
 
-    public ClassroomModel(String room, String location, String capacity, String note) {
+    public ClassroomModel(String room, String info) {
         this.room = room;
-        this.location = location;
-        this.capacity = capacity;
-        this.note = note;
+        this.info = info;
     }
 
     public String getRoom() {
         return room;
     }
 
-    public String getLocation() {
-        return location;
-    }
-
-    public String getCapacity() {
-        return capacity;
-    }
-
-    public String getNote() {
-        return note;
-    }
-
-    public String toFileString() {
-        return room + "," + location + "," + capacity + "," + note;
-    }
-
     public void setRoom(String room) {
         this.room = room;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public String getInfo() {
+        return info;
     }
 
-    public void setCapacity(String capacity) {
-        this.capacity = capacity;
+    public void setInfo(String info) {
+        this.info = info;
     }
 
-    public void setNote(String note) {
-        this.note = note;
+    // 파일 저장 포맷 (강의실,정보)
+    public String toFileString() {
+        return room + "," + info;
+    }
+    
+    // 테이블 표시용
+    public Object[] toArray() {
+        return new Object[]{room, info};
     }
 }

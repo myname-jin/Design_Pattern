@@ -287,16 +287,21 @@ public class ReservationGUIController {
     }
 
     /**
-     * classroom.txt에서 강의실 정보 가져오기 (위치, 인원, 비고)
+     * classroom.txt에서 강의실 정보 가져오기
      */
     public String getRoomInfo(String roomName) {
         String filePath = "src/main/resources/classroom.txt";
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+       
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(filePath), "UTF-8"))) {
+            
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", -1);
-                if (parts.length == 4 && parts[0].equals(roomName)) {
-                    return String.format("%s, %s, %s", parts[1], parts[2], parts[3]); // 위치, 인원, 비고
+                //(이름, 정보)
+                String[] parts = line.split(",", 2); 
+                
+                if (parts.length >= 2 && parts[0].trim().equals(roomName)) {
+                    return parts[1].trim(); // 정보 부분만 반환
                 }
             }
         } catch (IOException e) {

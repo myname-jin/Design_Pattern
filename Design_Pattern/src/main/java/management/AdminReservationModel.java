@@ -13,12 +13,10 @@ import java.util.stream.Collectors;
 // ConcreteSubject: 실제 기능을 구현하는 클래스
 public class AdminReservationModel extends Subject {
     
-    // 파일 경로
-    private static final String FILE_PATH = "src/main/resources/reservation.txt"; 
+    private static String FILE_PATH = "src/main/resources/reservation.txt"; 
     
     // [직접 구현 1] 관찰자 목록을 자식 클래스가 직접 관리함
     private List<ReservationObserver> observers = new ArrayList<>();
-    
     private List<Reservation> reservationList = new ArrayList<>();
 
     // [직접 구현 2] 부모의 추상 메서드 구현 (@Override)
@@ -112,7 +110,7 @@ public class AdminReservationModel extends Subject {
                     LocalTime endTime = LocalTime.parse(res.getEndTime(), timeFormatter);
                     LocalDateTime endDateTime = LocalDateTime.of(resDate, endTime);
                     
-                    // 현재 시간이 예약 종료 시간을 지났다면?
+                    // 현재 시간이 예약 종료 시간을 지났다면
                     if (now.isAfter(endDateTime)) {
                         res.setStatus("예약확정"); 
                         isUpdated = true;
@@ -153,7 +151,7 @@ public class AdminReservationModel extends Subject {
         notifyObservers(reservationList); 
     }
 
-    // 현재 상태 조회 (수정 방지용)
+    // 현재 상태 조회 
     public String getCurrentStatus(String studentId, String roomName, String date, String startTime) {
         for (Reservation res : reservationList) {
             if (res.getStudentId().equals(studentId) &&

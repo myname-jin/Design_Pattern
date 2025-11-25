@@ -4,10 +4,6 @@
  */
 package management;
 
-/**
- *
- * @author suk22
- */
 public class ReservationMgmtModel {
 
     private String name;

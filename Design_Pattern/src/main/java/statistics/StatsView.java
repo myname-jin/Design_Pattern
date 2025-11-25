@@ -43,16 +43,14 @@ public class StatsView extends JFrame {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // --- 왼쪽: 검색 조건 ---
+        // 검색 조건
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         
         yearCombo = new JComboBox<>(new String[]{"2024", "2025", "2026"});
         yearCombo.setSelectedItem("2025");
         
-        // [수정] 계절학기 포함
         semesterCombo = new JComboBox<>(new String[]{"1학기", "하계", "2학기", "동계", "전체"});
         
-        // [수정] 주별 현황 포함
         typeCombo = new JComboBox<>(new String[]{"일별 현황", "주별 현황", "월별 현황"});
         typeCombo.addActionListener(e -> handleStrategyChange());
 
@@ -67,7 +65,7 @@ public class StatsView extends JFrame {
         leftPanel.add(typeCombo);
         leftPanel.add(searchBtn);
         
-        // --- 오른쪽: 시각화 버튼 ---
+        // 시각화 버튼
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         JButton visualBtn = new JButton("시각화 자료 >");
         visualBtn.setBackground(new Color(200, 230, 255));
@@ -150,7 +148,7 @@ public class StatsView extends JFrame {
         totalLabel.setText(" 총 예약 건수: " + totalCount + "건");
     }
     
-    // [핵심] 학기별 날짜 필터링 로직
+    // 학기별 날짜 필터링 로직
     private List<Reservation> filterData(List<Reservation> data, String year, String semester) {
         List<Reservation> result = new ArrayList<>();
         

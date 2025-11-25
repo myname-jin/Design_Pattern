@@ -69,7 +69,6 @@ public class BannedUserListView extends JDialog {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    // [수정됨] banlist.txt만 읽으면 끝!
     private void loadBannedUserData() {
         tableModel.setRowCount(0);
         File file = new File("src/main/resources/banlist.txt");
@@ -82,7 +81,7 @@ public class BannedUserListView extends JDialog {
                 // 파일 형식: 학번,이름,학과,구분
                 String[] parts = line.split(",");
                 if (parts.length >= 4) {
-                    tableModel.addRow(parts); // 그대로 테이블에 추가
+                    tableModel.addRow(parts); 
                 }
             }
         } catch (IOException e) {
