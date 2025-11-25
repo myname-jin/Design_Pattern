@@ -2,65 +2,57 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
  */
-/*
+
 package ServerClient;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import org.junit.jupiter.api.Test;
-
+import ServerClient.CommandProcessor;
+import ServerClient.LogoutUtil;
 import javax.swing.JFrame;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
-import java.net.Socket;
+import java.io.IOException;
+import java.io.StringWriter;
 
 public class LogoutUtilTest {
+    public static void main(String[] args) throws InterruptedException, IOException {
+        System.out.println("[Integration Test] LogoutUtil (Window Closing Event) 검증");
 
-  
-    static class DummySocket extends Socket {
-        private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        // 1. 가짜 리시버 준비
+        StringWriter sw = new StringWriter();
+        BufferedWriter mockWriter = new BufferedWriter(sw);
 
-        @Override
-        public java.io.OutputStream getOutputStream() {
-            return baos;
+        // 2. 가짜 윈도우(JFrame) 생성 (화면에는 안 보이게 설정)
+        JFrame dummyFrame = new JFrame();
+        String userId = "TestUser";
+
+        // 3. [핵심] LogoutUtil 연결 (리스너 부착)
+        LogoutUtil.attach(dummyFrame, userId, mockWriter);
+
+        // 4. [이벤트 시뮬레이션] 강제로 '창 닫기' 이벤트를 발생시킴!
+        System.out.println(" 시스템 이벤트 발생: WINDOW_CLOSING 강제 호출");
+        dummyFrame.dispatchEvent(new WindowEvent(dummyFrame, WindowEvent.WINDOW_CLOSING));
+
+        // 5. 비동기 대기
+        // LogoutUtil 내부에는 0.5초 대기 로직이 있고,
+        // Invoker가 스레드로 동작하므로 넉넉히 1.5초 기다려줍니다.
+        Thread.sleep(1500);
+
+        // 6. 검증 (리시버에 LOGOUT 메시지가 도착했는지 확인)
+        String result = sw.toString().trim();
+        String expected = "LOGOUT:TestUser";
+
+        System.out.println("--------------------------------------------------");
+        System.out.println("결과 확인: " + result);
+        System.out.println("--------------------------------------------------");
+
+        if (result.contains(expected)) {
+            System.out.println(" 테스트 성공: 윈도우 종료 시 로그아웃 커맨드가 자동 실행되었습니다.");
+        } else {
+            System.err.println(" 테스트 실패: 로그아웃 메시지가 전송되지 않았습니다.");
         }
-
-        @Override
-        public void close() {
-            // noop
-        }
-
-        String getSentData() {
-            return baos.toString();
-        }
-    }
-
-    @Test
-    public void testLogoutMessageSentOnWindowClosing() throws Exception {
-        // 1) 준비: 더미 소켓과 BufferedWriter, 그리고 JFrame 생성
-        DummySocket socket = new DummySocket();
-        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        JFrame frame = new JFrame();
-        // (윈도우 닫힘으로 종료되지 않도록 DO_NOTHING 설정)
-        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-        // 2) attach 호출: 윈도우가 닫힐 때 로그아웃 메시지 전송하도록 설정
-        LogoutUtil.attach(frame, "user123", socket, out);
-
-        // 3) 이벤트 강제 발생: 등록된 WindowListener 에게 windowClosing 호출
-        WindowEvent evt = new WindowEvent(frame, WindowEvent.WINDOW_CLOSING);
-        for (WindowListener wl : frame.getWindowListeners()) {
-            wl.windowClosing(evt);
-        }
-
-        // 4) 플러시된 데이터 읽기
-        String sent = socket.getSentData();
-
-        // 5) 검증: 정확히 "LOGOUT:user123\n" 메시지가 나갔는지 확인
-        assertEquals("LOGOUT:user123\n", sent);
+        
+        // 테스트용 프레임 메모리 해제
+        dummyFrame.dispose();
+        System.exit(0); // 스레드 강제 종료
     }
 }
-*/
