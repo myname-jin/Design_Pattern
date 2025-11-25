@@ -5,6 +5,7 @@
 package login;
 
 
+import Reservation.ReservationMonitor;
 import ServerClient.*;
 import ruleagreement.RuleAgreementController;
 import management.ReservationMgmtView;
@@ -58,6 +59,8 @@ public class LoginController {
                 FileSyncClient fileSyncClient = new FileSyncClient(writer); 
                 fileWatcher.addObserver(fileSyncClient);
                 fileWatcher.start();
+                
+                new ReservationMonitor(userId).start();
 
                 // [수정] InfoRequestCommand에 writer 주입
                 CommandProcessor.getInstance().addCommand(
@@ -109,6 +112,8 @@ public class LoginController {
                         FileSyncClient fileSyncClient = new FileSyncClient(writer);
                         fileWatcher.addObserver(fileSyncClient);
                         fileWatcher.start();
+                        
+                        new ReservationMonitor(userId).start();
 
                         // [수정] InfoRequestCommand에 writer 주입
                         CommandProcessor.getInstance().addCommand(
