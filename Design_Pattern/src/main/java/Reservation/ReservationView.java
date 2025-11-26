@@ -56,7 +56,9 @@ public class ReservationView extends JFrame {
         roomPanel.add(roomComboBox);
         centerPanel.add(roomPanel);
         
-        roomInfoLabel = new JLabel(" ");  // 초기 빈 라벨
+        roomInfoLabel = new JLabel(" (정보 없음) "); 
+        roomInfoLabel.setForeground(Color.BLUE); // 파란색으로 강조
+        roomInfoLabel.setFont(new Font("맑은 고딕", Font.BOLD, 12)); // 폰트 굵게
         roomPanel.add(roomInfoLabel);    // 강의실 선택 아래에 배치
 
 

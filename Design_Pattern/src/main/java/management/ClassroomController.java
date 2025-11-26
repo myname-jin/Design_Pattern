@@ -1,135 +1,96 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package management;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.IOException;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author suk22
- */
 public class ClassroomController {
 
     private DefaultTableModel tableModel;
-    private String filePath;
-    private static final String DEFAULT_FILE_PATH = "src/main/resources/classroom.txt";
+    private static String FILE_PATH = "src/main/resources/classroom.txt";
 
     public ClassroomController(DefaultTableModel tableModel) {
-        this(tableModel, DEFAULT_FILE_PATH);
-    }
-
-    public ClassroomController(DefaultTableModel tableModel, String filePath) {
         this.tableModel = tableModel;
-        this.filePath = filePath;
     }
 
-    public String addClassroom(ClassroomModel classroom) {
-        List<ClassroomModel> existing = getClassroomList();
-        for (ClassroomModel c : existing) {
-            if (c.getRoom().equals(classroom.getRoom())) {
-                return "이미 존재하는 강의실입니다: " + classroom.getRoom();
-            }
-        }
-
-        tableModel.addRow(new Object[]{
-            classroom.getRoom(),
-            classroom.getLocation(),
-            classroom.getCapacity(),
-            classroom.getNote()
-        });
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
-            writer.write(classroom.toFileString());
-            writer.newLine();
-        } catch (IOException e) {
-            return "파일 저장 중 오류 발생: " + e.getMessage();
-        }
-
-        return "강의실이 추가되었습니다: " + classroom.getRoom();
-    }
-
+    // 1. 목록 불러오기
     public List<ClassroomModel> getClassroomList() {
         List<ClassroomModel> classrooms = new ArrayList<>();
+        File file = new File(FILE_PATH);
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+        if (!file.exists()) return classrooms;
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",", -1);
-                if (parts.length == 4) {
-                    classrooms.add(new ClassroomModel(parts[0], parts[1], parts[2], parts[3]));
+                String[] parts = line.split(",", 2); 
+                if (parts.length >= 2) {
+                    classrooms.add(new ClassroomModel(parts[0].trim(), parts[1].trim()));
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace(); // 개발 중 로그용
+            e.printStackTrace();
         }
-
         return classrooms;
     }
 
-    public String updateClassroom(ClassroomModel updatedClassroom) {
-        List<ClassroomModel> classrooms = getClassroomList();
-        boolean found = false;
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            for (ClassroomModel c : classrooms) {
-                if (c.getRoom().equals(updatedClassroom.getRoom())) {
-                    writer.write(updatedClassroom.toFileString());
-                    found = true;
-                } else {
-                    writer.write(c.toFileString());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            return "파일 저장 중 오류 발생: " + e.getMessage();
-        }
-
-        return found ? "강의실이 수정되었습니다: " + updatedClassroom.getRoom()
-                : "수정할 강의실을 찾을 수 없습니다: " + updatedClassroom.getRoom();
-    }
-
-    public String deleteClassroom(String room) {
-        List<ClassroomModel> classrooms = getClassroomList();
-        boolean found = false;
-
-        List<ClassroomModel> updatedClassrooms = new ArrayList<>();
-        for (ClassroomModel c : classrooms) {
-            if (c.getRoom().equals(room)) {
-                found = true;
-            } else {
-                updatedClassrooms.add(c);
-            }
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            for (ClassroomModel c : updatedClassrooms) {
+    // 2. 저장하기
+    private void saveToFile(List<ClassroomModel> list) {
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(FILE_PATH), StandardCharsets.UTF_8))) {
+            for (ClassroomModel c : list) {
                 writer.write(c.toFileString());
                 writer.newLine();
             }
         } catch (IOException e) {
-            return "파일 저장 중 오류 발생: " + e.getMessage();
+            e.printStackTrace();
         }
+    }
 
-        if (found) {
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                if (tableModel.getValueAt(i, 0).equals(room)) {
-                    tableModel.removeRow(i);
-                    break;
-                }
+    // 3. 추가
+    public String addClassroom(ClassroomModel newRoom) {
+        List<ClassroomModel> list = getClassroomList();
+        for (ClassroomModel c : list) {
+            if (c.getRoom().equals(newRoom.getRoom())) {
+                return "강의실 정보가 이미 존재합니다: " + newRoom.getRoom();
             }
-            return "강의실이 삭제되었습니다: " + room;
-        } else {
-            return "삭제할 강의실을 찾을 수 없습니다: " + room;
+        }
+        list.add(newRoom);
+        saveToFile(list);
+        return null; // 성공
+    }
+
+    // 4. 수정
+    public void updateClassroom(ClassroomModel updatedRoom) {
+        List<ClassroomModel> list = getClassroomList();
+        boolean found = false;
+        
+        for (ClassroomModel c : list) {
+            if (c.getRoom().equals(updatedRoom.getRoom())) {
+                c.setInfo(updatedRoom.getInfo());
+                found = true;
+                break;
+            }
+        }
+        
+        if (found) {
+            saveToFile(list);
+            JOptionPane.showMessageDialog(null, "수정되었습니다.");
+        }
+    }
+
+    // 5. 삭제
+    public void deleteClassroom(String roomName) {
+        List<ClassroomModel> list = getClassroomList();
+        boolean removed = list.removeIf(c -> c.getRoom().equals(roomName));
+        
+        if (removed) {
+            saveToFile(list);
+            JOptionPane.showMessageDialog(null, "삭제되었습니다.");
         }
     }
 }

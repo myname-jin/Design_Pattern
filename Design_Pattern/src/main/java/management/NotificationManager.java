@@ -11,14 +11,12 @@ import javax.swing.SwingUtilities;
 
 public class NotificationManager {
 
-    private static final String FILE_PATH = "src/main/resources/personal_notifications.txt";
+    private static String FILE_PATH = "src/main/resources/personal_notifications.txt";
     private boolean isRunning = false; 
 
     // --- [관리자용] 알림 보내기 ---
     public void sendNotification(String studentId, String message) {
-        // [핵심 수정] 메시지 내용 중에 줄바꿈(\n)이 있으면 파일이 깨지므로 공백으로 변경!
         String safeMessage = message.replace("\n", " "); 
-        
         String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         
         // 수정된 safeMessage를 저장
@@ -61,7 +59,6 @@ public class NotificationManager {
         System.out.println("<<< [User] 알림 감시자 종료");
     }
 
-    // [핵심] 디버깅 로그가 추가된 확인 로직
     private synchronized void checkAndPopup(String myId) {
         File file = new File(FILE_PATH);
         if (!file.exists()) {
@@ -84,9 +81,6 @@ public class NotificationManager {
                 if (parts.length >= 4) {
                     String fileId = parts[0].trim();
                     String isRead = parts[3].trim();
-
-                    // [디버깅 로그] 이게 콘솔에 떠야 합니다!
-                    // System.out.println("[Check] 파일ID: " + fileId + " / 내ID: " + myId + " / 읽음: " + isRead);
 
                     // 조건: 아이디가 같고(equals) + 안 읽었으면(FALSE)
                     if (fileId.equals(myId) && "FALSE".equals(isRead)) {

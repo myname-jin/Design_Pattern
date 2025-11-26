@@ -1,17 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package management;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- *
- * @author suk22
+ * ReservationMgmtModel 단위 테스트
+ * (데이터 객체의 생성 및 조회, 수정 검증)
  */
 public class ReservationMgmtModelTest {
 
@@ -30,14 +26,42 @@ public class ReservationMgmtModelTest {
         );
     }
 
+    @AfterEach
+    public void tearDown() {
+    }
+
     @Test
-    void testConstructorAndGetters() {
+    void testGetName() {
         assertEquals("홍길동", model.getName());
+    }
+
+    @Test
+    void testGetStudentId() {
         assertEquals("20231234", model.getStudentId());
+    }
+
+    @Test
+    void testGetDepartment() {
         assertEquals("컴퓨터소프트웨어공학과", model.getDepartment());
+    }
+
+    @Test
+    void testGetRoom() {
         assertEquals("912", model.getRoom());
+    }
+
+    @Test
+    void testGetDate() {
         assertEquals("2025-06-01", model.getDate());
+    }
+
+    @Test
+    void testGetTime() {
         assertEquals("09:00~11:00", model.getTime());
+    }
+
+    @Test
+    void testGetApproved() {
         assertEquals("예약 대기", model.getApproved());
     }
 

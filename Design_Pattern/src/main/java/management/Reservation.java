@@ -3,7 +3,6 @@ package management;
 import java.io.Serializable;
 
 public class Reservation implements Serializable {
-    // 필드 정의 (12개) - 순서는 파일 저장 순서와 동일하게 유지
     private String studentId;   // 1. 사용자ID (학번)
     private String userType;    // 2. 사용자구분
     private String userName;    // 3. 이름
@@ -51,20 +50,18 @@ public class Reservation implements Serializable {
     // Setter
     public void setStatus(String status) { this.status = status; }
 
-    // [수정됨] JTable 화면 컬럼 순서 변경
-    // 변경 전: 이름, 학과, 학번...
-    // 변경 후: [0:학번, 1:학과, 2:이름, 3:구분, 4:강의실, 5:날짜, 6:시간, 7:목적, 8:상태]
+    // [0:학번, 1:학과, 2:이름, 3:구분, 4:강의실, 5:날짜, 6:시간, 7:목적, 8:상태]
     public Object[] toArray() {
         return new Object[]{
-            studentId,  // 0번: 학번 (맨 앞으로 이동)
-            department, // 1번: 학과
-            userName,   // 2번: 이름 (뒤로 이동)
-            userType,   // 3번
-            roomName,   // 4번
-            date + "(" + dayOfWeek + ")", // 5번
-            startTime + "~" + endTime,    // 6번
-            purpose,    // 7번
-            status      // 8번
+            studentId,  
+            department, 
+            userName,   
+            userType,   
+            roomName,   
+            date + "(" + dayOfWeek + ")", 
+            startTime + "~" + endTime,   
+            purpose,    
+            status      
         };
     }
 }

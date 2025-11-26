@@ -13,16 +13,13 @@ import java.util.Iterator;
 import java.util.List;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author suk22
- */
+
 public class ReservationMgmtController {
 
-    private static final String FILE_PATH = "src/main/resources/reservation.txt";
-    private static final String BAN_LIST_FILE = "src/main/resources/banlist.txt";
+    private static String FILE_PATH = "src/main/resources/reservation.txt";
+    private static String BAN_LIST_FILE = "src/main/resources/banlist.txt";
     
-    // [추가] 알림 매니저 (사용자에게 메시지 보내기용)
+    // 알림 매니저 (사용자에게 메시지 보내기용)
     private NotificationManager notiManager = new NotificationManager();
 
     public List<ReservationMgmtModel> getAllReservations() {
@@ -101,7 +98,6 @@ public class ReservationMgmtController {
         return bannedUsers;
     }
 
-    // [수정됨] 학번만 받는 게 아니라 전체 정보를 받아서 저장
     public void banUser(String studentId, String name, String dept, String userType) {
         List<String> bannedLines = getBannedLines();
         
@@ -115,7 +111,6 @@ public class ReservationMgmtController {
         }
 
         if (!alreadyBanned) {
-            // [핵심] 파일에 모든 정보 저장 (형식: 학번,이름,학과,구분)
             String newBanRecord = String.format("%s,%s,%s,%s", studentId, name, dept, userType);
             bannedLines.add(newBanRecord);
             
@@ -131,7 +126,6 @@ public class ReservationMgmtController {
         boolean removed = false;
 
         // 리스트에서 해당 학번을 포함한 줄 삭제
-        // (iterator를 써야 삭제 시 에러가 안 남)
         Iterator<String> iterator = bannedLines.iterator();
         while (iterator.hasNext()) {
             String line = iterator.next();
@@ -168,7 +162,6 @@ public class ReservationMgmtController {
         return lines;
     }
     
-   // [수정됨] 기존 saveBannedUsers 대신 사용
     private void saveBannedLines(List<String> lines) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(BAN_LIST_FILE))) {
             for (String line : lines) {
@@ -181,8 +174,15 @@ public class ReservationMgmtController {
     }
 
     public boolean isUserBanned(String studentId) {
-        List<String> bannedUsers = getBannedUsers();
-        return bannedUsers.contains(studentId);
+        List<String> bannedLines = getBannedUsers();
+        for (String line : bannedLines) {
+            // 쉼표(,)로 잘라서 첫 번째(학번)가 일치하는지 확인
+            String[] parts = line.split(",");
+            if (parts.length > 0 && parts[0].trim().equals(studentId)) {
+                return true; // 차단된 사용자임.
+            }
+        }
+        return false; // 끝까지 찾아도 없음.
     }
 
     public List<ReservationMgmtModel> searchReservations(String name, String studentId, String room) {

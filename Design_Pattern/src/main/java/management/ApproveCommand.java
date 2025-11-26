@@ -1,6 +1,6 @@
 package management;
 
-// 승인 명령 클래스 (별도 파일)
+// 승인 명령 클래스 
 public class ApproveCommand implements ReservationCommand {
     private AdminReservationModel model;
     private NotificationManager notiManager;

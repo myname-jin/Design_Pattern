@@ -23,7 +23,6 @@ public class UserStatsController {
         this("src/main/resources/reservation.txt", "src/main/resources/cancel.txt");
     }
 
-    // 파일 경로를 외부에서 주입받는 생성자 (테스트용)
     public UserStatsController(String reservationFile, String cancelLogFile) {
         this.reservationFile = reservationFile;
         this.cancelLogFile = cancelLogFile;

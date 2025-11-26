@@ -12,7 +12,6 @@ public class MonthlyStrategy implements StatsStrategy {
         
         for (Reservation r : data) {
             String dateKey = r.getDate();
-            // "2025-11-24" -> "2025-11" (월까지만 자르기)
             if (dateKey.length() >= 7) {
                 String monthKey = dateKey.substring(0, 7); 
                 stats.put(monthKey, stats.getOrDefault(monthKey, 0) + 1);
