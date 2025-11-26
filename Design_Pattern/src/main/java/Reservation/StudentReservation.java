@@ -30,15 +30,16 @@ public class StudentReservation extends AbstractReservation {
             } catch (IOException e) {
                 System.out.println("제한 사용자 파일 읽기 실패: " + e.getMessage());
             }
-            
+
             return bannedUsers.contains(userId);
 
+        } else {
+            return false;
         }
-        else return false;
     }
 
     @Override
-    protected boolean studentConstraints(String userId, String date, List<String> times) {
+    protected boolean checkUserConstraints(String userId, String date, List<String> times) {
         if (isUserAlreadyReserved(userId, date)) {
             view.showMessage("학생은 하루 1회만 예약할 수 있습니다.");
             return false; // 1일 1회 제한 초과 시 로직 종료
@@ -49,13 +50,23 @@ public class StudentReservation extends AbstractReservation {
             return false; // 예약 시간 제한 초과 시 로직 종료
         }
         return true;
-        
-        
+
     }
 
     @Override
-    protected String confirmReservation(String userType) {
-                return "예약대기";
+    protected String confirmReservation() {
+        return "예약대기";
+    }
+
+
+    @Override
+    protected boolean processTimeSlotConflict(String userId, String date, List<String> times, String roomName) {
+        // 학생은 이미 예약된 시간이면 예약 불가
+        if (isTimeSlotAlreadyReserved(roomName, date, times, userId)) {
+            view.showMessage("선택한 시간대에 이미 예약이 존재합니다.");
+            return false; // 진행 중단
+        }
+        return true; // 충돌 없으면 진행
     }
 
 }

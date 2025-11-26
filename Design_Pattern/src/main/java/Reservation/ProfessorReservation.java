@@ -23,13 +23,20 @@ public class ProfessorReservation extends AbstractReservation {
     }
 
     @Override
-    protected boolean studentConstraints(String userId, String date, List<String> times) {
+    protected boolean checkUserConstraints(String userId, String date, List<String> times) {
         return true;
         // 학생 제한이니까 교수는 제한 없음 -> 원하면 코드 추가 가능
     }
 
     @Override
-    protected String confirmReservation(String userType) {
-            return "예약확정";
+    protected String confirmReservation() {
+        return "예약확정";
+    }
+
+    @Override
+    protected boolean processTimeSlotConflict(String userId, String date, List<String> times, String roomName) {
+        ahandleCancelConfirm(); // 기존 예약 취소 로직 호출
+
+        return true; // 취소 처리 했으므로 예약 진행 (항상 true)
     }
 }
