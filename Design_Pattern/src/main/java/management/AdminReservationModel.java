@@ -10,16 +10,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// ConcreteSubject: 실제 기능을 구현하는 클래스
+// ConcreteSubject: 실제 기능을 구현하는 클래스 (겸 Receiver)
 public class AdminReservationModel extends Subject {
     
     private static String FILE_PATH = "src/main/resources/reservation.txt"; 
     
-    // [직접 구현 1] 관찰자 목록을 자식 클래스가 직접 관리함
+    // [Refactoring] 리시버가 알림 매니저를 직접 관리
+    private NotificationManager notiManager = new NotificationManager();
+
     private List<ReservationObserver> observers = new ArrayList<>();
     private List<Reservation> reservationList = new ArrayList<>();
 
-    // [직접 구현 2] 부모의 추상 메서드 구현 (@Override)
     @Override
     public void addObserver(ReservationObserver observer) {
         observers.add(observer);
@@ -37,9 +38,31 @@ public class AdminReservationModel extends Subject {
         }
     }
     
-    // 외부에서 전체 예약 리스트를 가져갈 수 있게 해줌
     public List<Reservation> getAllReservations() {
         return reservationList;
+    }
+
+    // --- [Refactoring] 커맨드 패턴을 위한 실제 행동(Action) 메서드들 ---
+    
+    // 1. 승인 처리
+    public void approveReservation(String studentId, String roomName, String date, String startTime) {
+        updateStatus(studentId, roomName, date, startTime, "승인");
+        String msg = String.format("[%s] %s 예약이 '승인'되었습니다.", date, roomName);
+        notiManager.sendNotification(studentId, msg);
+    }
+
+    // 2. 거절 처리
+    public void rejectReservation(String studentId, String roomName, String date, String startTime) {
+        updateStatus(studentId, roomName, date, startTime, "거절");
+        String msg = String.format("[%s] %s 예약이 '거절'되었습니다.", date, roomName);
+        notiManager.sendNotification(studentId, msg);
+    }
+
+    // 3. 강제 취소 처리
+    public void cancelReservation(String studentId, String roomName, String date, String startTime) {
+        updateStatus(studentId, roomName, date, startTime, "취소");
+        String msg = String.format("관리자 사정으로 [%s %s] 예약이 '취소'되었습니다.", date, roomName);
+        notiManager.sendNotification(studentId, msg);
     }
 
     // --- 비즈니스 로직 ---
@@ -62,22 +85,11 @@ public class AdminReservationModel extends Subject {
                 if (line.trim().isEmpty()) continue;
 
                 String[] parts = line.split(",");
-                
-                // 12개 컬럼 확인
                 if (parts.length >= 12) {
                     Reservation res = new Reservation(
-                        parts[0].trim(), // 1.ID (학번)
-                        parts[1].trim(), // 2.구분
-                        parts[2].trim(), // 3.이름
-                        parts[3].trim(), // 4.학과
-                        parts[4].trim(), // 5.타입
-                        parts[5].trim(), // 6.호실
-                        parts[6].trim(), // 7.날짜
-                        parts[7].trim(), // 8.요일
-                        parts[8].trim(), // 9.시작
-                        parts[9].trim(), // 10.종료
-                        parts[10].trim(),// 11.목적
-                        parts[11].trim() // 12.상태
+                        parts[0].trim(), parts[1].trim(), parts[2].trim(), parts[3].trim(), 
+                        parts[4].trim(), parts[5].trim(), parts[6].trim(), parts[7].trim(), 
+                        parts[8].trim(), parts[9].trim(), parts[10].trim(), parts[11].trim()
                     );
                     reservationList.add(res);
                 }
@@ -87,51 +99,36 @@ public class AdminReservationModel extends Subject {
             System.err.println("[Model] 파일 읽기 실패!");
         }
         
-        // 데이터를 불러온 직후, 지난 예약이 있는지 체크하여 상태 업데이트
         checkAndExpireReservations();
-        
         notifyObservers(reservationList); 
-        System.out.println("[Model] 데이터 로드 완료: " + reservationList.size() + "건");
     }
 
-    // 시간이 지난 '승인' 예약을 '예약확정'으로 자동 변경
     private void checkAndExpireReservations() {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        
         boolean isUpdated = false;
 
         for (Reservation res : reservationList) {
-            // 이미 '승인' 상태인 예약만 체크
             if ("승인".equals(res.getStatus())) {
                 try {
                     LocalDate resDate = LocalDate.parse(res.getDate(), dateFormatter);
                     LocalTime endTime = LocalTime.parse(res.getEndTime(), timeFormatter);
                     LocalDateTime endDateTime = LocalDateTime.of(resDate, endTime);
                     
-                    // 현재 시간이 예약 종료 시간을 지났다면
                     if (now.isAfter(endDateTime)) {
                         res.setStatus("예약확정"); 
                         isUpdated = true;
-                        System.out.println("[Auto] 지난 예약 확정 처리: " + res.getStudentId() + " / " + res.getDate());
                     }
-                } catch (Exception e) {
-                    // 날짜 형식이 잘못된 경우 무시
-                }
+                } catch (Exception e) { }
             }
         }
-
-        // 변경된 사항이 있으면 파일에 저장
-        if (isUpdated) {
-            saveToFile();
-        }
+        if (isUpdated) saveToFile();
     }
 
-    // 상태 변경 (관리자 수동 조작)
-    public void updateStatus(String studentId, String roomName, String date, String startTime, String newStatus) {
+    // 내부 상태 업데이트 로직 (private)
+    private void updateStatus(String studentId, String roomName, String date, String startTime, String newStatus) {
         boolean isUpdated = false;
-
         for (Reservation res : reservationList) {
             if (res.getStudentId().equals(studentId) &&
                 res.getRoomName().equals(roomName) &&
@@ -143,15 +140,15 @@ public class AdminReservationModel extends Subject {
                 break; 
             }
         }
-        
-        if (isUpdated) {
-            saveToFile(); 
-        }
-        
+        if (isUpdated) saveToFile(); 
         notifyObservers(reservationList); 
     }
 
-    // 현재 상태 조회 
+    // [추가됨] View나 Controller가 호출할 수 있는 공개 메서드 (단순 상태 변경용)
+    public void updateStatusPublic(String studentId, String roomName, String date, String startTime, String newStatus) {
+        updateStatus(studentId, roomName, date, startTime, newStatus);
+    }
+
     public String getCurrentStatus(String studentId, String roomName, String date, String startTime) {
         for (Reservation res : reservationList) {
             if (res.getStudentId().equals(studentId) &&
@@ -171,28 +168,15 @@ public class AdminReservationModel extends Subject {
             
             for (Reservation res : reservationList) {
                 String line = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-                        res.getStudentId(),
-                        res.getUserType(),
-                        res.getUserName(),
-                        res.getDepartment(),
-                        res.getRoomType(),
-                        res.getRoomName(),
-                        res.getDate(),
-                        res.getDayOfWeek(),
-                        res.getStartTime(),
-                        res.getEndTime(),
-                        res.getPurpose(),
-                        res.getStatus()
+                        res.getStudentId(), res.getUserType(), res.getUserName(), res.getDepartment(),
+                        res.getRoomType(), res.getRoomName(), res.getDate(), res.getDayOfWeek(),
+                        res.getStartTime(), res.getEndTime(), res.getPurpose(), res.getStatus()
                 );
-                
                 writer.write(line);
                 writer.newLine(); 
             }
-            System.out.println("[Model] 저장 완료: " + FILE_PATH);
-            
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("[Model] 저장 실패!");
         }
     }
 
@@ -201,7 +185,6 @@ public class AdminReservationModel extends Subject {
             notifyObservers(reservationList);
             return;
         }
-
         List<Reservation> filteredList = reservationList.stream()
                 .filter(r -> {
                     switch (searchType) {
@@ -222,7 +205,6 @@ public class AdminReservationModel extends Subject {
                     }
                 })
                 .collect(Collectors.toList());
-
         notifyObservers(filteredList);
     }
 }

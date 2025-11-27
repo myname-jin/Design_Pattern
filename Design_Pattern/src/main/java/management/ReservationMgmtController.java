@@ -1,18 +1,15 @@
-/*
-     * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-     * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package management;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.io.*;
 import java.util.Iterator;
 import java.util.List;
 import javax.swing.JOptionPane;
-
 
 public class ReservationMgmtController {
 
@@ -21,6 +18,45 @@ public class ReservationMgmtController {
     
     // 알림 매니저 (사용자에게 메시지 보내기용)
     private NotificationManager notiManager = new NotificationManager();
+
+    // [New] Command 패턴용 멤버 변수
+    private AdminReservationModel model;
+    private ReservationInvoker invoker;
+
+    public ReservationMgmtController() {
+        this.model = new AdminReservationModel();
+        this.invoker = new ReservationInvoker();
+    }
+
+    // [New] View가 Model에 접근할 수 있도록 getter 제공 (Dependency 관계용)
+    public AdminReservationModel getModel() {
+        return this.model;
+    }
+
+    // [New] Command 패턴 실행 메서드들 (Client 역할)
+    public void processApprove(String studentId, String roomName, String date, String startTime) {
+        ReservationCommand command = new ApproveCommand(model, studentId, roomName, date, startTime);
+        invoker.setCommand(command);
+        invoker.buttonPressed();
+    }
+
+    public void processReject(String studentId, String roomName, String date, String startTime) {
+        ReservationCommand command = new RejectCommand(model, studentId, roomName, date, startTime);
+        invoker.setCommand(command);
+        invoker.buttonPressed();
+    }
+
+    public void processCancel(String studentId, String roomName, String date, String startTime) {
+        ReservationCommand command = new CancelCommand(model, studentId, roomName, date, startTime);
+        invoker.setCommand(command);
+        invoker.buttonPressed();
+    }
+    
+    public void processUpdateStatus(String studentId, String roomName, String date, String startTime, String newStatus) {
+        model.updateStatusPublic(studentId, roomName, date, startTime, newStatus);
+    }
+
+    // --- 기존 레거시 메서드 유지 ---
 
     public List<ReservationMgmtModel> getAllReservations() {
         List<ReservationMgmtModel> reservations = new ArrayList<>();
@@ -121,6 +157,7 @@ public class ReservationMgmtController {
             notiManager.sendNotification(studentId, msg);
         }
     }
+    
     public void unbanUser(String studentId) {
         List<String> bannedLines = getBannedLines();
         boolean removed = false;
@@ -147,6 +184,7 @@ public class ReservationMgmtController {
             JOptionPane.showMessageDialog(null, "제한 목록에 없는 사용자입니다.", "알림", JOptionPane.WARNING_MESSAGE);
         }
     }
+    
     // 파일 내용을 통째로 읽어오는 메서드
     private List<String> getBannedLines() {
         List<String> lines = new ArrayList<>();
@@ -209,5 +247,4 @@ public class ReservationMgmtController {
 
         return filtered;
     }
-
 }

@@ -1,15 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package management;
 
 import calendar.CalendarController;
 import calendar.ReservationRepositoryModel;
 import calendar.ReservationServiceModel;
-import visualization.MainView;
-import visualization.ReservationModel;
-import visualization.ReservationController;
 import rulemanagement.RuleManagementController;
 import statistics.StatsView;
 
@@ -25,53 +18,44 @@ import javax.swing.table.TableColumn;
 
 /**
  * Observer Pattern이 적용된 관리자 예약 관리 화면
- * 기존 기능을 모두 유지하며 구조를 개선함.
+ * [Perfect Decoupling] 구조 적용: View는 Model과 Invoker를 멤버로 갖지 않음.
  */
 public class ReservationMgmtView extends javax.swing.JFrame implements ReservationObserver {
 
-    private boolean isReverting = false; //  무한루프 방지용
+    private boolean isReverting = false; 
     
-    // 1. 옵저버 패턴을 위한 모델
-    private AdminReservationModel model;
+    // View는 오직 Controller만 멤버로 가짐.
+    private ReservationMgmtController controller; 
     
-    // 2.  기존 기능을 위한 컨트롤러들 (유지 - 제한 기능 등에서 사용)
-    private ReservationMgmtController oldController = new ReservationMgmtController(); 
     private NotificationController notificationController = new NotificationController();
-    
-    // 백업 매니저
     private BackupManager backupManager = new BackupManager();
-    
-    // Invoker (커맨드 패턴용)
-    private ReservationInvoker invoker = new ReservationInvoker();
 
-    // --- 생성자 ---
     public ReservationMgmtView() {
-        // 1. 모델 초기화 및 옵저버 등록
-        this.model = new AdminReservationModel();
-        this.model.addObserver(this); // "나(View)를 관찰자로 등록해줘"
+        // 1. 컨트롤러 생성
+        this.controller = new ReservationMgmtController();
+        
+        // 2. [옵저버 등록] Controller를 통해 Model에 접근하여 등록
+        controller.getModel().addObserver(this);
 
-        // 2. UI 초기화 
+        // 3. UI 초기화
         initComponents();
         
-        // 검색창 클릭 시 텍스트 자동 삭제/복구 기능 추가
+        // 검색창 Placeholder 로직
         jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
             public void focusGained(java.awt.event.FocusEvent evt) {
-                // 클릭했을 때, "검색해 주세요"가 적혀있으면 지워준다.
                 if (jTextField1.getText().equals("검색해 주세요")) {
                     jTextField1.setText("");
                 }
             }
             @Override
             public void focusLost(java.awt.event.FocusEvent evt) {
-                // 다른 곳을 클릭했을 때, 비어있으면 다시 "검색해 주세요"를 채워준다.
                 if (jTextField1.getText().isEmpty()) {
                     jTextField1.setText("검색해 주세요");
                 }
             }
         });
         
-        // 3. 추가 설정 
         setTableColumns();
         setupTableListener();
         setupApprovalColumnEditor();
@@ -79,10 +63,8 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         setTitle("관리자 예약 목록");
         setLocationRelativeTo(null);
 
-        // 4. 데이터 로드 (이제 모델이 데이터를 로드하고, Observer인 View에게 알림을 줌)
-        model.loadData(); 
-
-        // 5. 알림 모니터링 시작 
+        // model.loadData() -> controller.getModel().loadData()
+        controller.getModel().loadData(); 
         notificationController.startMonitoring();
     }
 
@@ -91,21 +73,37 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         setVisible(true);
     }
 
-    // 옵저버 인터페이스 구현 메서드
-    // 모델 데이터가 변경되면 이 메서드가 자동으로 호출됨.
     @Override
-    public void onReservationUpdated(List<Reservation> reservationList) {
-        SwingUtilities.invokeLater(() -> {
+public void onReservationUpdated(List<Reservation> reservationList) {
+    SwingUtilities.invokeLater(() -> {
+        try {
             DefaultTableModel tableModel = (DefaultTableModel) jTable1.getModel();
             tableModel.setRowCount(0); // 기존 테이블 내용 삭제
 
             for (Reservation r : reservationList) {
                 tableModel.addRow(r.toArray());
             }
-            
+
             System.out.println("[View] 테이블이 갱신되었습니다. 데이터 수: " + reservationList.size());
-        });
-    }
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            //View는 Model 재등록을 시도
+            if (controller.getModel() != null) {
+                controller.getModel().addObserver(this);
+            }
+
+            // 사용자에게 오류 안내
+            JOptionPane.showMessageDialog(
+                    this,
+                    "목록 갱신 오류 — 새로고침을 수행하십시오",
+                    "알림",
+                    JOptionPane.WARNING_MESSAGE
+            );
+        }
+    });
+}
+
     
     private void setTableColumns() {
         String[] columnNames = {
@@ -127,64 +125,52 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
 
    private void setupTableListener() {
         jTable1.getModel().addTableModelListener(e -> {
-            // 1. 값이 되돌려지는 중이라면 리스너 무시 (무한루프 방지)
             if (isReverting) return;
             if (e.getFirstRow() < 0) return; 
             
             int row = e.getFirstRow();
             int column = e.getColumn();
 
-            // 8번 컬럼(승인 여부)이 변경되었을 때
             if (column == 8 && row < jTable1.getRowCount()) {
-                // 데이터 가져오기
                 String studentId = (String) jTable1.getValueAt(row, 0); 
                 String roomName  = (String) jTable1.getValueAt(row, 4);
-                
                 String dateStr = (String) jTable1.getValueAt(row, 5);
                 String date = dateStr.contains("(") ? dateStr.substring(0, dateStr.indexOf("(")) : dateStr;
-
                 String timeStr = (String) jTable1.getValueAt(row, 6);
                 String startTime = timeStr.contains("~") ? timeStr.split("~")[0] : timeStr;
-                
                 String newStatus = (String) jTable1.getValueAt(row, 8);
 
-                //  이미 승인/거절/취소된 상태인지 확인
-                String currentStatus = model.getCurrentStatus(studentId, roomName, date, startTime);
+                // [수정] model -> controller.getModel()
+                AdminReservationModel receiver = controller.getModel();
+                String currentStatus = receiver.getCurrentStatus(studentId, roomName, date, startTime);
                 
-                // 원래 상태가 '예약대기'가 아닌데, 값을 바꾸려고 한다면?
                 if (currentStatus != null && !"예약대기".equals(currentStatus) && !currentStatus.equals(newStatus)) {
-                    
-                    // 경고 메시지
                     JOptionPane.showMessageDialog(this, 
-                            "이미 '" + currentStatus + "' 처리된 예약은 변경할 수 없습니다.\n(취소가 필요한 경우 '강제 취소' 버튼을 이용하세요.)",
-                            "변경 불가", JOptionPane.WARNING_MESSAGE);
-
-                    // 값을 원래대로 되돌리기 
+                            "이미 '" + currentStatus + "' 처리된 예약은 변경할 수 없습니다.", "변경 불가", JOptionPane.WARNING_MESSAGE);
                     SwingUtilities.invokeLater(() -> {
-                        isReverting = true; // 깃발 들기 (리스너 동작 멈춰!)
+                        isReverting = true; // 깃발 들기
                         jTable1.setValueAt(currentStatus, row, 8); // 값 원복
                         isReverting = false; // 깃발 내리기
                     });
-                    return; // 커맨드 실행 안 하고 종료
+                    return; 
                 }
-               
 
-                // 승인/거절 커맨드 실행 로직 
                 ReservationCommand command = null;
 
                 if ("승인".equals(newStatus)) {
-                    command = new ApproveCommand(model, studentId, roomName, date, startTime);
+                    command = new ApproveCommand(receiver, studentId, roomName, date, startTime);
                 } else if ("거절".equals(newStatus)) {
-                    command = new RejectCommand(model, studentId, roomName, date, startTime);
+                    command = new RejectCommand(receiver, studentId, roomName, date, startTime);
                 } else {
-                    model.updateStatus(studentId, roomName, date, startTime, newStatus);
+                    receiver.updateStatusPublic(studentId, roomName, date, startTime, newStatus);
                     return;
                 }
 
                 if (command != null) {
-                    // 직접 execute() 하지 않고, Invoker에게 전달하여 실행
-                    invoker.setCommand(command); // 리모컨에 명령 세팅
-                    invoker.buttonPressed();     // 리모컨 버튼 누름
+                    //  invoker 필드 대신 지역 변수 사용
+                    ReservationInvoker tempInvoker = new ReservationInvoker();
+                    tempInvoker.setCommand(command);
+                    tempInvoker.buttonPressed(); 
                 }
             }
         });
@@ -524,7 +510,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         String type      = (String) jTable1.getValueAt(selectedRow, 3);
         
         // 컨트롤러에게 모든 정보 전달 -> banlist.txt에 저장됨
-        oldController.banUser(studentId, name, dept, type); 
+        controller.banUser(studentId, name, dept, type); 
         
         JOptionPane.showMessageDialog(this, studentId + " 사용자가 제한되었습니다.");
     }//GEN-LAST:event_jButton6ActionPerformed
@@ -533,7 +519,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         // 사용자 제한 해제 기능
         String studentId = JOptionPane.showInputDialog(this, "해제할 사용자의 학번을 입력하세요.");
         if (studentId != null && !studentId.isEmpty()) {
-            oldController.unbanUser(studentId); 
+            controller.unbanUser(studentId); 
         }
     }//GEN-LAST:event_jButton7ActionPerformed
 
@@ -543,7 +529,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         
         String selectedType = (String) jComboBox1.getSelectedItem();
         
-        model.filterData(keyword, selectedType);
+        controller.getModel().filterData(keyword, selectedType);
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
@@ -587,7 +573,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
     }//GEN-LAST:event_jButton11ActionPerformed
 
     private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
-         model.loadData();
+         controller.getModel().loadData();
         
     }//GEN-LAST:event_jButton12ActionPerformed
 
@@ -609,7 +595,9 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         String timeStr = (String) jTable1.getValueAt(selectedRow, 6);
         String startTime = timeStr.contains("~") ? timeStr.split("~")[0] : timeStr;
 
-        String currentStatus = model.getCurrentStatus(studentId, roomName, date, startTime);
+        AdminReservationModel receiver = controller.getModel();
+        
+        String currentStatus = receiver.getCurrentStatus(studentId, roomName, date, startTime);
         if ("거절".equals(currentStatus) || "취소".equals(currentStatus)) {
             JOptionPane.showMessageDialog(this, "이미 처리된 예약입니다.", "경고", JOptionPane.WARNING_MESSAGE); 
             return;
@@ -617,12 +605,12 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         
         int confirm = JOptionPane.showConfirmDialog(this, "강제 취소하시겠습니까?", "확인", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            // [커맨드 패턴 적용]
-            ReservationCommand command = new CancelCommand(model, studentId, roomName, date, startTime);
+            // Command 패턴 Client 역할 (Invoker 지역변수 생성)
+            ReservationCommand command = new CancelCommand(receiver, studentId, roomName, date, startTime);
             
-            // Invoker를 통해 실행
-            invoker.setCommand(command);
-            invoker.buttonPressed();
+            ReservationInvoker tempInvoker = new ReservationInvoker();
+            tempInvoker.setCommand(command);
+            tempInvoker.buttonPressed();
             
             JOptionPane.showMessageDialog(this, "예약이 취소되었습니다.");
         }
@@ -660,7 +648,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
                             "복구 완료", 
                             JOptionPane.INFORMATION_MESSAGE);
                     
-                    model.loadData(); 
+                    controller.getModel().loadData(); 
                     
                 } else {
                     JOptionPane.showMessageDialog(this, 
@@ -674,7 +662,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
 
     private void jButton16ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton16ActionPerformed
 
-            new BannedUserListView(this, oldController).setVisible(true);
+            new BannedUserListView(this, controller).setVisible(true);
     }//GEN-LAST:event_jButton16ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

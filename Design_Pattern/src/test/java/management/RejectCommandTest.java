@@ -11,24 +11,27 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RejectCommandTest {
 
     private AdminReservationModel model;
-    private Path tempFile; // 테스트용 임시 파일
+    private Path tempResFile;
+    private Path tempNotiFile;
 
     @BeforeEach
     public void setUp() throws Exception {
-        // 1. 임시 파일 생성
-        tempFile = Files.createTempFile("test_reservation_reject", ".txt");
+        tempResFile = Files.createTempFile("test_reservation_reject", ".txt");
+        tempNotiFile = Files.createTempFile("test_notification_reject", ".txt");
 
-        // 2. 모델 생성 및 경로 교체 (Reflection)
         model = new AdminReservationModel();
         try {
-            Field pathField = AdminReservationModel.class.getDeclaredField("FILE_PATH");
-            pathField.setAccessible(true);
-            pathField.set(null, tempFile.toString());
+            Field resPathField = AdminReservationModel.class.getDeclaredField("FILE_PATH");
+            resPathField.setAccessible(true);
+            resPathField.set(null, tempResFile.toString());
+            
+            Field notiPathField = NotificationManager.class.getDeclaredField("FILE_PATH");
+            notiPathField.setAccessible(true);
+            notiPathField.set(null, tempNotiFile.toString());
         } catch (Exception e) {
-            System.err.println("경로 교체 실패 (final 필드일 수 있음): " + e.getMessage());
+            System.err.println("경로 교체 실패: " + e.getMessage());
         }
 
-        // 3. 테스트 데이터 주입
         List<Reservation> data = new ArrayList<>();
         data.add(new Reservation("TestID", "학생", "테스터", "컴공", "실습실", "911", 
                                  "2025-01-01", "월", "10:00", "12:00", "공부", "예약대기"));
@@ -40,7 +43,8 @@ public class RejectCommandTest {
 
     @AfterEach
     public void tearDown() throws IOException {
-        Files.deleteIfExists(tempFile);
+        Files.deleteIfExists(tempResFile);
+        Files.deleteIfExists(tempNotiFile);
     }
 
     @Test
