@@ -50,13 +50,18 @@ public class ReservationInfoBuilder extends AbstractReservation {
     }
 
     @Override
-    protected boolean studentConstraints(String userId, String date, List<String> times) {
+    protected boolean checkUserConstraints(String userId, String date, List<String> times) {
         // 이미 빌더에서 하루 전, 2시간 이하 체크를 했으므로 그대로 true 반환
         return true;
     }
 
     @Override
-    protected String confirmReservation(String userType) {
+    protected String confirmReservation() {
         return "예약대기";
+    }
+
+    @Override
+    protected boolean processTimeSlotConflict(String userId, String date, List<String> times, String roomName) {
+        return true; // 충돌 없으면 진행
     }
 }
