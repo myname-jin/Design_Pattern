@@ -4,10 +4,6 @@
  */
 package management;
 
-/**
- *
- * @author suk22
- */
 public class UserStatsModel {
 
     private String name;

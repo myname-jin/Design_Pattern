@@ -3,7 +3,6 @@ package management;
 // 승인 명령 클래스 
 public class ApproveCommand implements ReservationCommand {
     
-    // [Refactoring] 리시버는 오직 Model 하나입니다.
     private AdminReservationModel model;
     
     private String studentId;
@@ -21,7 +20,7 @@ public class ApproveCommand implements ReservationCommand {
 
     @Override
     public void execute() {
-        // [Refactoring] 리시버에게 '승인해라'라고 명령만 내립니다. (알림 등 세부 사항은 리시버가 처리)
+        // 리시버에게 '승인해라'라고 명령
         model.approveReservation(studentId, roomName, date, startTime);
     }
 }

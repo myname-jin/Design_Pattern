@@ -59,7 +59,7 @@ public class BannedUserListView extends JDialog {
 
             if (confirm == JOptionPane.YES_OPTION) {
                 controller.unbanUser(studentId);
-                loadBannedUserData(); // 목록 새로고침
+                loadBannedUserData();
             }
         });
 

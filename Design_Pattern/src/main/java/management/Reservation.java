@@ -47,10 +47,8 @@ public class Reservation implements Serializable {
     public String getPurpose() { return purpose; }
     public String getStatus() { return status; }
 
-    // Setter
     public void setStatus(String status) { this.status = status; }
 
-    // [0:학번, 1:학과, 2:이름, 3:구분, 4:강의실, 5:날짜, 6:시간, 7:목적, 8:상태]
     public Object[] toArray() {
         return new Object[]{
             studentId,  

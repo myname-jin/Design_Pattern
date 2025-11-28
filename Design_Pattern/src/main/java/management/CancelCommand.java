@@ -2,7 +2,6 @@ package management;
 
 public class CancelCommand implements ReservationCommand {
     
-    // [Refactoring] 리시버는 오직 Model 하나입니다.
     private AdminReservationModel model;
     
     private String studentId;
@@ -20,7 +19,7 @@ public class CancelCommand implements ReservationCommand {
 
     @Override
     public void execute() {
-        // [Refactoring] 리시버에게 '취소해라'라고 명령만 내립니다.
+        // 리시버에게 '취소해라'라고 명령
         model.cancelReservation(studentId, roomName, date, startTime);
     }
 }

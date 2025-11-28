@@ -34,8 +34,8 @@ public class NotificationController {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                List<String> pendingList = model.getPendingReservations(); // 예약 대기 상태
-                List<String> allList = model.getAllReservations();         // 전체 예약
+                List<String> pendingList = model.getPendingReservations(); 
+                List<String> allList = model.getAllReservations();         
 
                 Set<String> currentPendingSet = new HashSet<>(pendingList);
                 Set<String> currentAllSet = new HashSet<>(allList);
@@ -115,8 +115,8 @@ public class NotificationController {
     }
 
     public Map<String, List<String>> detectNotificationChangesForTest() {
-        List<String> pendingList = model.getPendingReservations(); // 예약 대기 상태
-        List<String> allList = model.getAllReservations();         // 전체 예약
+        List<String> pendingList = model.getPendingReservations(); 
+        List<String> allList = model.getAllReservations();         
 
         Set<String> currentPendingSet = new HashSet<>(pendingList);
         Set<String> currentAllSet = new HashSet<>(allList);

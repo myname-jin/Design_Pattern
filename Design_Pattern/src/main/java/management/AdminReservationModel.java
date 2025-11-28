@@ -14,27 +14,33 @@ import java.util.stream.Collectors;
 public class AdminReservationModel extends Subject {
     
     private static String FILE_PATH = "src/main/resources/reservation.txt"; 
-    
-    // [Refactoring] 리시버가 알림 매니저를 직접 관리
     private NotificationManager notiManager = new NotificationManager();
-
-    private List<ReservationObserver> observers = new ArrayList<>();
     private List<Reservation> reservationList = new ArrayList<>();
+    
+    public AdminReservationModel() {
+        this.observers = new ArrayList<>();
+    }
 
     @Override
     public void addObserver(ReservationObserver observer) {
-        observers.add(observer);
+        if (observers != null) {
+            observers.add(observer);
+        }
     }
 
     @Override
     public void removeObserver(ReservationObserver observer) {
-        observers.remove(observer);
+        if (observers != null) {
+            observers.remove(observer);
+        }
     }
 
     @Override
     public void notifyObservers(List<Reservation> dataToShow) {
-        for (ReservationObserver observer : observers) {
-            observer.onReservationUpdated(dataToShow);
+        if (observers != null) {
+            for (ReservationObserver observer : observers) {
+                observer.onReservationUpdated(dataToShow);
+            }
         }
     }
     
@@ -42,7 +48,7 @@ public class AdminReservationModel extends Subject {
         return reservationList;
     }
 
-    // --- [Refactoring] 커맨드 패턴을 위한 실제 행동(Action) 메서드들 ---
+    // --- 커맨드 패턴을 위한 실제 행동(Action) 메서드들 ---
     
     // 1. 승인 처리
     public void approveReservation(String studentId, String roomName, String date, String startTime) {
@@ -126,8 +132,9 @@ public class AdminReservationModel extends Subject {
         if (isUpdated) saveToFile();
     }
 
-    // 내부 상태 업데이트 로직 (private)
-    private void updateStatus(String studentId, String roomName, String date, String startTime, String newStatus) {
+    // 내부 상태 업데이트 로직 
+    public void updateStatus(String studentId, String roomName, String date,
+            String startTime, String newStatus) {
         boolean isUpdated = false;
         for (Reservation res : reservationList) {
             if (res.getStudentId().equals(studentId) &&
@@ -144,12 +151,9 @@ public class AdminReservationModel extends Subject {
         notifyObservers(reservationList); 
     }
 
-    // [추가됨] View나 Controller가 호출할 수 있는 공개 메서드 (단순 상태 변경용)
-    public void updateStatusPublic(String studentId, String roomName, String date, String startTime, String newStatus) {
-        updateStatus(studentId, roomName, date, startTime, newStatus);
-    }
 
-    public String getCurrentStatus(String studentId, String roomName, String date, String startTime) {
+    public String getCurrentStatus(String studentId, String roomName, 
+            String date, String startTime) {
         for (Reservation res : reservationList) {
             if (res.getStudentId().equals(studentId) &&
                 res.getRoomName().equals(roomName) &&

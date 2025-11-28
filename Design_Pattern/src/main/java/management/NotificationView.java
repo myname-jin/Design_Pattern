@@ -8,10 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- *
- * @author suk22
- */
+
 public class NotificationView extends JFrame {
 
     private JTextArea textArea;
@@ -26,7 +23,7 @@ public class NotificationView extends JFrame {
         textArea = new JTextArea();
         textArea.setEditable(false);
         textArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
-        textArea.setMargin(new Insets(10, 10, 10, 10)); // 여백 추가
+        textArea.setMargin(new Insets(10, 10, 10, 10)); 
 
         for (String line : notifications) {
             textArea.append(line + "\n");

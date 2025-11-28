@@ -32,7 +32,6 @@ public class ClassroomView extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
 
-    // 테이블 새로고침
     private void refreshTable() {
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         model.setRowCount(0);

@@ -23,10 +23,7 @@ import javax.swing.table.TableColumn;
 public class ReservationMgmtView extends javax.swing.JFrame implements ReservationObserver {
 
     private boolean isReverting = false; 
-    
-    // View는 오직 Controller만 멤버로 가짐.
     private ReservationMgmtController controller; 
-    
     private NotificationController notificationController = new NotificationController();
     private BackupManager backupManager = new BackupManager();
 
@@ -74,7 +71,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
     }
 
     @Override
-public void onReservationUpdated(List<Reservation> reservationList) {
+    public void onReservationUpdated(List<Reservation> reservationList) {
     SwingUtilities.invokeLater(() -> {
         try {
             DefaultTableModel tableModel = (DefaultTableModel) jTable1.getModel();
@@ -140,7 +137,7 @@ public void onReservationUpdated(List<Reservation> reservationList) {
                 String startTime = timeStr.contains("~") ? timeStr.split("~")[0] : timeStr;
                 String newStatus = (String) jTable1.getValueAt(row, 8);
 
-                // [수정] model -> controller.getModel()
+                // model -> controller.getModel()
                 AdminReservationModel receiver = controller.getModel();
                 String currentStatus = receiver.getCurrentStatus(studentId, roomName, date, startTime);
                 
@@ -162,7 +159,7 @@ public void onReservationUpdated(List<Reservation> reservationList) {
                 } else if ("거절".equals(newStatus)) {
                     command = new RejectCommand(receiver, studentId, roomName, date, startTime);
                 } else {
-                    receiver.updateStatusPublic(studentId, roomName, date, startTime, newStatus);
+                    receiver.updateStatus(studentId, roomName, date, startTime, newStatus);
                     return;
                 }
 
@@ -625,7 +622,7 @@ public void onReservationUpdated(List<Reservation> reservationList) {
 
             if (result.startsWith("백업 완료")) {
                 JOptionPane.showMessageDialog(this, 
-                        result, // "백업 완료: 파일명.txt"
+                        result, 
                         "백업 성공", 
                         JOptionPane.INFORMATION_MESSAGE);
 
