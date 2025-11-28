@@ -78,7 +78,6 @@ public class BannedUserListView extends JDialog {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // 파일 형식: 학번,이름,학과,구분
                 String[] parts = line.split(",");
                 if (parts.length >= 4) {
                     tableModel.addRow(parts); 

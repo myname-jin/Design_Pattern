@@ -10,7 +10,8 @@ public class ApproveCommand implements ReservationCommand {
     private String date;
     private String startTime;
 
-    public ApproveCommand(AdminReservationModel model, String studentId, String roomName, String date, String startTime) {
+    public ApproveCommand(AdminReservationModel model, 
+            String studentId, String roomName, String date, String startTime) {
         this.model = model;
         this.studentId = studentId;
         this.roomName = roomName;

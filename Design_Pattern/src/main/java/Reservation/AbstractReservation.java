@@ -91,22 +91,8 @@ public abstract class AbstractReservation {
         if (!checkUserConstraints(userId, date, times)) {
             return;
         }
-        /*
-        if (isUserTypeStudent(userType) == true) {
-            if (isTimeSlotAlreadyReserved(selectedRoomName, date, times, userId)) { // 🚨 반환 값 확인
-                view.showMessage("선택한 시간대에 이미 예약이 존재합니다."); // 메시지 표시
-                return; // 🛑 중복 시 예약 중단
-            }
-        }
-
-        if (isUserTypeStudent(userType) == true) {
-            if (!checkUserConstraints(userId, date, times)) { // 🚨 반환 값 확인
-                return; // 🛑 학생 제약 조건 불충족 시 예약 중단
-            }
-        } else {
-            ahandleCancelConfirm();
-        }
-         */
+        
+        // 5. 예약 저장 실행 (우선 예약 로직 포함)
         saveReservationsForTimes(times, selectedRoomName, date, purpose, userName, userType, userId, userDept);
 
     }
@@ -119,33 +105,71 @@ public abstract class AbstractReservation {
 
     protected abstract String confirmReservation();
 
+    // 교수님이 학생 예약을 밀어낼 때 호출되는 메서드
     protected void ahandleCancelConfirm() {
         for (String selectedTime : times) {
             String[] split = selectedTime.split("~");
             if (split.length == 2) {
                 String startTime = split[0].trim();
-                //String endTime = split[1].trim();
+                String canceledStudentId = cancelStudentReservation(date, selectedRoomName, startTime);
 
-                String reason = "교수님 예약으로 인한 취소";
-                String CUI;
-                // 예약 취소 처리
-                CUI = model.cancelReservation(date, selectedRoomName, startTime, times);
-                if (CUI.equals("")) {
-                    view.showMessage("예약 취소 처리 중 오류가 발생했습니다.");
-                    return;
-                }
-
-                // 취소 이유 저장
-                boolean reasonSuccess = model.saveCancelReason(CUI, reason);
-                if (!reasonSuccess) {
-                    view.showMessage("취소 사유 저장 중 오류가 발생했습니다.");
-                    return;
+                if (canceledStudentId != null) {
+                    String reason = "교수님 보강/세미나 우선 예약으로 인한 취소";
+                    
+                    model.saveCancelReason(canceledStudentId, reason);
+                    String msg = String.format("[%s %s] %s", date, selectedRoomName, reason);
+                    notiManager.sendNotification(canceledStudentId, msg);
+                    
+                    System.out.println("[Priority] 학생(" + canceledStudentId + ") 예약 취소 완료");
                 }
             }
         }
+    }
 
-        //notiManager.sendNotification(CUI, reason);
-        //view.setVisible(false);
+    // 학생 예약을 파일에서 찾아 '취소' 상태로 변경
+    private String cancelStudentReservation(String date, String room, String startTime) {
+        String filePath = "src/main/resources/reservation.txt";
+        List<String> allLines = new ArrayList<>();
+        String targetStudentId = null;
+        boolean found = false;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 12) {
+                    String rId = parts[0].trim();
+                    String rType = parts[1].trim();
+                    String rRoom = parts[5].trim();
+                    String rDate = parts[6].trim();
+                    String rStart = parts[8].trim();
+                    String rStatus = parts[11].trim();
+
+                    // 조건: 학생이고, 날짜/장소/시간 일치하고, 이미 취소된 게 아니어야 함
+                    if ("학생".equals(rType) && rRoom.equals(room) && rDate.equals(date) && rStart.equals(startTime) 
+                            && !"취소".equals(rStatus) && !"거절".equals(rStatus)) {
+                        
+                        targetStudentId = rId; // 학번 저장
+                        parts[11] = "취소";    // 상태 변경
+                        line = String.join(",", parts); // 줄 업데이트
+                        found = true;
+                    }
+                }
+                allLines.add(line);
+            }
+        } catch (IOException e) { return null; }
+
+        // 파일 덮어쓰기
+        if (found) {
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath), "UTF-8"))) {
+                for (String line : allLines) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            } catch (IOException e) { return null; }
+        }
+
+        return targetStudentId; // 취소된 학생 학번 반환 (없으면 null)
     }
 
     protected int calculateTotalDuration(List<String> times) {
@@ -267,7 +291,7 @@ public abstract class AbstractReservation {
     private void getUserInfo(String date, List<String> times, String purpose, String time, String selectedRoomName) {
         this.date = date;
         this.times = times; // 선택된 모든 시간 슬롯 (리스트)
-        this.time = time; // (주의: 아래 로직에서 사용되지 않는 불필요 변수로 보임)
+        this.time = time;
         this.purpose = purpose;
         this.selectedRoomName = selectedRoomName;
         this.selectedRoom = getRoomByName(selectedRoomName);
@@ -311,7 +335,7 @@ public abstract class AbstractReservation {
     }
 
     private void saveReservationsForTimes(List<String> times, String selectedRoomName, String date, String purpose, String userName, String userType, String userId, String userDept) {
-        //saveResrevation();
+        
         String dayOfWeek = getDayOfWeek(date);
         String status = confirmReservation();
         RoomModel selectedRoom = getRoomByName(selectedRoomName);
@@ -333,7 +357,6 @@ public abstract class AbstractReservation {
                 } else if (status.equals("예약확정")) {
                     view.showMessage("예약이 확정되었습니다.");
                 }
-                //view.showMessage(status + "상태입니다.");
 
             }
         }
@@ -364,32 +387,3 @@ public abstract class AbstractReservation {
         return null;
     }
 }
-
-/*
-    public final void doReservation(String userId, String userType, String userName, String userDept, String date, List<String> times, String purpose, String time, String selectedRoomName, ReservationView view) {
-        this.view = view;
-        loadRoomsFromExcel();
-        getUserInfo(date, times, purpose, time, selectedRoomName);
-
-        // 1. 요청 객체 생성
-        ReservationRequest request = new ReservationRequest(userId, userType, date, times, selectedRoomName, purpose);
-
-        // 2. 책임 연쇄 구성 (순서대로 연결)
-        ReservationCheckHandler chain = new CheckAllSelectedHandler();
-        chain.setNext(new CheckUserBannedHandler())
-                .setNext(new CheckTimeSlotReservedHandler())
-                .setNext(new CheckStudentConstraintsHandler());
-
-        try {
-            // 3. 검증 체인 실행
-            chain.check(request);
-
-            // 4. 모든 검증 통과 시 예약 저장 수행
-            saveReservationsForTimes(times, selectedRoomName, date, purpose, userName, userType, userId, userDept);
-
-        } catch (Exception e) {
-            // 5. 어느 핸들러에서든 실패하면 예외 메시지를 View에 표시하고 중단
-            view.showMessage(e.getMessage());
-        }
-    }
- */

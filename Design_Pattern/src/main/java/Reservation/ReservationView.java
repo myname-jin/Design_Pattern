@@ -23,6 +23,7 @@ public class ReservationView extends JFrame {
     private JButton backButton;
     private String selectedPurpose = "";
     private Set<String> selectedTimes = new TreeSet<>();
+    private JTextField accompanyingField;
 
     public ReservationView() {
         setTitle("강의실 예약 시스템");
@@ -102,6 +103,14 @@ public class ReservationView extends JFrame {
         totalDurationLabel = new JLabel("0분");
         durationPanel.add(totalDurationLabel);
         centerPanel.add(durationPanel);
+        
+        //동반 학생 입력 필드
+        JPanel accompanyingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        accompanyingPanel.add(new JLabel("동반 학생(학번/이름):"));
+        accompanyingField = new JTextField(20); // 20자 정도 입력 가능
+        accompanyingPanel.add(accompanyingField);
+        centerPanel.add(accompanyingPanel); // 목적 패널 위에 추가
+        
 
         // 목적 선택
         JLabel purposeLabel = new JLabel("예약 목적 선택:", SwingConstants.CENTER);
@@ -340,5 +349,10 @@ centerPanel.add(purposePanel);
             }
             return "";
         }
+    }
+    
+    //입력값 가져오는 메서드
+    public String getAccompanyingStudents() {
+        return accompanyingField.getText().trim();
     }
 }
