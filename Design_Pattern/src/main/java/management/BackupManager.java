@@ -41,7 +41,7 @@ public class BackupManager {
         }
     }
 
-    // 복구 기능 (반환 타입: String)
+    // 복구 기능
     public String performRestore() {
         JFileChooser fileChooser = new JFileChooser(BACKUP_DIR);
         fileChooser.setDialogTitle("복구할 백업 파일을 선택하세요");

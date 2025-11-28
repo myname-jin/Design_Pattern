@@ -46,7 +46,7 @@ public class NotificationManager {
             while (isRunning) {
                 checkAndPopup(myStudentId);
                 try {
-                    Thread.sleep(3000); // 3초 대기
+                    Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     break;
                 }
@@ -77,12 +77,10 @@ public class NotificationManager {
                 if (line.trim().isEmpty()) continue;
 
                 String[] parts = line.split(",");
-                // 구조: [0]학번, [1]메시지, [2]시간, [3]읽음여부
                 if (parts.length >= 4) {
                     String fileId = parts[0].trim();
                     String isRead = parts[3].trim();
 
-                    // 조건: 아이디가 같고(equals) + 안 읽었으면(FALSE)
                     if (fileId.equals(myId) && "FALSE".equals(isRead)) {
                         
                         System.out.println("🎉 [성공] 새 알림 발견! 팝업을 띄웁니다.");
@@ -90,7 +88,6 @@ public class NotificationManager {
                         String msg = parts[1];
                         String time = parts[2];
 
-                        // 팝업 띄우기
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(null, 
                                 msg, 
@@ -109,7 +106,6 @@ public class NotificationManager {
             e.printStackTrace();
         }
 
-        // 변경 사항 저장
         if (foundNew) {
             try (BufferedWriter writer = new BufferedWriter(
                     new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {

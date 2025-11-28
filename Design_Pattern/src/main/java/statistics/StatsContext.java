@@ -8,7 +8,7 @@ import management.Reservation;
 // [Context] 전략을 보유하고 실행하는 객체
 public class StatsContext {
     
-    private StatsStrategy strategy; // 현재 사용 중인 전략 (Has-A)
+    private StatsStrategy strategy; // 현재 사용 중인 전략 
 
     // 전략 교체 (Setter)
     public void setStrategy(StatsStrategy strategy) {

@@ -61,7 +61,7 @@ public class ClassroomController {
         }
         list.add(newRoom);
         saveToFile(list);
-        return null; // 성공
+        return null; 
     }
 
     // 4. 수정

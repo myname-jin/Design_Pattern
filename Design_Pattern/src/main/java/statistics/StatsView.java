@@ -39,7 +39,6 @@ public class StatsView extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // 1. 상단 패널
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -87,7 +86,6 @@ public class StatsView extends JFrame {
         topPanel.add(rightPanel, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
-        // 2. 중앙 테이블
         String[] columns = {"구분 (기간)", "예약 건수"};
         tableModel = new DefaultTableModel(columns, 0);
         statsTable = new JTable(tableModel);
@@ -95,7 +93,6 @@ public class StatsView extends JFrame {
         statsTable.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
         add(new JScrollPane(statsTable), BorderLayout.CENTER);
 
-        // 3. 하단 합계
         JPanel bottomPanel = new JPanel(new BorderLayout());
         totalLabel = new JLabel(" 총 예약 건수: 0건");
         totalLabel.setFont(new Font("맑은 고딕", Font.BOLD, 14));
@@ -116,7 +113,7 @@ public class StatsView extends JFrame {
         if ("일별 현황".equals(selected)) {
             context.setStrategy(new DailyStrategy());
         } else if ("주별 현황".equals(selected)) {
-            context.setStrategy(new WeeklyStrategy()); // [추가됨]
+            context.setStrategy(new WeeklyStrategy()); 
         } else {
             context.setStrategy(new MonthlyStrategy());
         }

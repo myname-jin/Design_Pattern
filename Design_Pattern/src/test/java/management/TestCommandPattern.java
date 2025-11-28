@@ -39,8 +39,6 @@ public class TestCommandPattern {
             return;
         }
 
-        // 1-2. NotificationManager의 파일 경로를 임시 파일로 교체 (Reflection)
-        // NotificationManager 내부의 FILE_PATH가 static이므로 클래스 레벨에서 교체하면 적용됨
         try {
             Field notiPathField = NotificationManager.class.getDeclaredField("FILE_PATH");
             notiPathField.setAccessible(true);
@@ -51,10 +49,12 @@ public class TestCommandPattern {
             return;
         }
 
-        // 2. 테스트용 더미 데이터 준비 (메모리에 직접 주입)
+        // 2. 테스트용 더미 데이터 준비 
         List<Reservation> memoryData = new ArrayList<>();
         // 초기 상태: "예약대기"
-        Reservation targetRes = new Reservation("TEST_ID", "학생", "테스터", "컴공", "회의실", "999", "2025-12-25", "수", "10:00", "12:00", "통합테스트", "예약대기");
+        Reservation targetRes = new Reservation("TEST_ID", "학생", "테스터", 
+                "컴공", "회의실", "999", "2025-12-25", "수", 
+                "10:00", "12:00", "통합테스트", "예약대기");
         memoryData.add(targetRes);
 
         // private 리스트(reservationList)에 접근하여 데이터 넣기
@@ -65,7 +65,6 @@ public class TestCommandPattern {
         System.out.println(">> 초기 상태: " + targetRes.getStatus()); 
 
         // 3. [Command] 승인 명령 생성
-        // 리팩토링된 생성자: (model, studentId, roomName, date, startTime)
         ReservationCommand approveCmd = new ApproveCommand(
                 model, "TEST_ID", "999", "2025-12-25", "10:00"
         );

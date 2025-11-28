@@ -20,7 +20,6 @@ public class NotificationModel {
         this("src/main/resources/reservation.txt");
     }
 
-    // 테스트용 생성자 (경로 주입 가능)
     public NotificationModel(String reservationFile) {
         this.reservationFile = reservationFile;
     }

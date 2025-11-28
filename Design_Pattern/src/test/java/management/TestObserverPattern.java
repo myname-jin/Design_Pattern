@@ -48,7 +48,7 @@ public class TestObserverPattern {
         } catch (Exception e) {
             System.err.println(">> ❌ 경로 교체 실패! AdminReservationModel의 FILE_PATH에서 final을 뺐는지 확인하세요.");
             Files.deleteIfExists(tempFile);
-            return; // 안전을 위해 테스트 중단
+            return; // 테스트 중단
         }
 
         // 2. [Observer] 가짜 화면 2개 생성
@@ -64,7 +64,8 @@ public class TestObserverPattern {
         System.out.println("\n>> 모델에서 데이터 변경 알림을 보냅니다...");
         
         List<Reservation> testData = new ArrayList<>();
-        testData.add(new Reservation("20231234", "학생", "홍길동", "컴공", "실습실", "911", "2025-05-05", "월", "10:00", "12:00", "공부", "예약대기"));
+        testData.add(new Reservation("20231234", "학생", "홍길동", "컴공", "실습실", 
+                "911", "2025-05-05", "월", "10:00", "12:00", "공부", "예약대기"));
         
         model.notifyObservers(testData);
 

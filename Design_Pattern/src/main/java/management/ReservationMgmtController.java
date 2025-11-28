@@ -19,7 +19,7 @@ public class ReservationMgmtController {
     // 알림 매니저 (사용자에게 메시지 보내기용)
     private NotificationManager notiManager = new NotificationManager();
 
-    // [New] Command 패턴용 멤버 변수
+    // Command 패턴용 멤버 변수
     private AdminReservationModel model;
     private ReservationInvoker invoker;
 
@@ -28,12 +28,12 @@ public class ReservationMgmtController {
         this.invoker = new ReservationInvoker();
     }
 
-    // [New] View가 Model에 접근할 수 있도록 getter 제공 (Dependency 관계용)
+    // View가 Model에 접근할 수 있도록 getter 제공 (Dependency 관계용)
     public AdminReservationModel getModel() {
         return this.model;
     }
 
-    // [New] Command 패턴 실행 메서드들 (Client 역할)
+    // Command 패턴 실행 메서드들 (Client 역할)
     public void processApprove(String studentId, String roomName, String date, String startTime) {
         ReservationCommand command = new ApproveCommand(model, studentId, roomName, date, startTime);
         invoker.setCommand(command);
@@ -53,7 +53,7 @@ public class ReservationMgmtController {
     }
     
     public void processUpdateStatus(String studentId, String roomName, String date, String startTime, String newStatus) {
-        model.updateStatusPublic(studentId, roomName, date, startTime, newStatus);
+        model.updateStatus(studentId, roomName, date, startTime, newStatus);
     }
 
     // --- 기존 레거시 메서드 유지 ---

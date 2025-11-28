@@ -9,10 +9,6 @@ import java.util.List;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author suk22
- */
 public class UserStatsView extends javax.swing.JFrame {
 
     private List<UserStatsModel> stats;

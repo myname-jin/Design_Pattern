@@ -12,7 +12,6 @@ public class NotificationService {
     public void sendNotification(String studentId, String message) {
         String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         
-        // 파일에 저장 형식: [받는사람ID, 메시지, 시간, 읽음여부(FALSE)]
         String line = String.format("%s,%s,%s,FALSE", studentId, message, time);
         
         File file = new File(NOTI_FILE);
