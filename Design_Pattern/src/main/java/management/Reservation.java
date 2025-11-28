@@ -50,6 +50,15 @@ public class Reservation implements Serializable {
     public void setStatus(String status) { this.status = status; }
 
     public Object[] toArray() {
+        
+        // 예약 리스트 화면 표시용 목적 다듬기
+        // "팀 회의 (동반: 2022...)"  ->  "팀 회의" 만 남기기
+        String displayPurpose = purpose;
+        if (purpose != null && purpose.contains(" (동반:")) {
+            // " (동반:" 이라는 글자가 시작되는 위치 앞까지만 자름
+            displayPurpose = purpose.substring(0, purpose.indexOf(" (동반:"));
+        }
+        
         return new Object[]{
             studentId,  
             department, 
@@ -58,7 +67,7 @@ public class Reservation implements Serializable {
             roomName,   
             date + "(" + dayOfWeek + ")", 
             startTime + "~" + endTime,   
-            purpose,    
+            displayPurpose,    
             status      
         };
     }

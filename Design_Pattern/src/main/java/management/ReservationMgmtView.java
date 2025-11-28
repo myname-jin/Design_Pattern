@@ -26,6 +26,7 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
     private ReservationMgmtController controller; 
     private NotificationController notificationController = new NotificationController();
     private BackupManager backupManager = new BackupManager();
+    private ReservationInvoker invoker = new ReservationInvoker();
 
     public ReservationMgmtView() {
         // 1. 컨트롤러 생성
@@ -164,10 +165,8 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
                 }
 
                 if (command != null) {
-                    //  invoker 필드 대신 지역 변수 사용
-                    ReservationInvoker tempInvoker = new ReservationInvoker();
-                    tempInvoker.setCommand(command);
-                    tempInvoker.buttonPressed(); 
+                    invoker.setCommand(command);
+                    invoker.buttonPressed(); 
                 }
             }
         });
@@ -602,12 +601,11 @@ public class ReservationMgmtView extends javax.swing.JFrame implements Reservati
         
         int confirm = JOptionPane.showConfirmDialog(this, "강제 취소하시겠습니까?", "확인", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            // Command 패턴 Client 역할 (Invoker 지역변수 생성)
+            // Command 패턴 Client 역할
             ReservationCommand command = new CancelCommand(receiver, studentId, roomName, date, startTime);
             
-            ReservationInvoker tempInvoker = new ReservationInvoker();
-            tempInvoker.setCommand(command);
-            tempInvoker.buttonPressed();
+            invoker.setCommand(command); 
+            invoker.buttonPressed();
             
             JOptionPane.showMessageDialog(this, "예약이 취소되었습니다.");
         }

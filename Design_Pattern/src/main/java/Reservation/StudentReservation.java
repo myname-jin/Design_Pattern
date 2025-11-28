@@ -18,24 +18,25 @@ public class StudentReservation extends AbstractReservation {
 
     @Override
     protected boolean isUserBanned(String userId, String userType) {
-        if (isUserTypeStudent(userType) == true) {
-            List<String> bannedUsers = new ArrayList<>();
+        // 학생인 경우에만 체크
+        if (isUserTypeStudent(userType)) {
             String filePath = "src/main/resources/banlist.txt";
 
             try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    bannedUsers.add(line.trim());
+                    // 콤마로 분리하여 첫 번째 항목(학번)만 비교
+                    String[] parts = line.split(",");
+                    if (parts.length > 0 && parts[0].trim().equals(userId)) {
+                        return true; // 차단된 사용자 발견
+                    }
                 }
             } catch (IOException e) {
                 System.out.println("제한 사용자 파일 읽기 실패: " + e.getMessage());
             }
-
-            return bannedUsers.contains(userId);
-
-        } else {
-            return false;
-        }
+            return false; // 목록에 없음
+        } 
+        return false; // 학생 아님
     }
 
     @Override

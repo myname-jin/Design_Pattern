@@ -37,7 +37,6 @@ public class ReservationGUIController {
 
     private BufferedWriter out;
 
-//클라이언트-서버 연결 코드(로그인과 사용자 페이지 연결되면 주석 해제)
     public ReservationGUIController(String userId, String name, String dept, String type,
             Socket socket, BufferedReader in, BufferedWriter out) {
         this.userId = userId;
@@ -55,7 +54,7 @@ public class ReservationGUIController {
         System.out.println("최종 유저 정보 - 이름: " + userName + ", 학과: " + userDept);
 
         view.setUserInfo(userName, userId, userDept);
-//여기 수정함요
+
         LogoutUtil.attach(view, userId, out);
 
         initializeReservationFeatures();
@@ -64,33 +63,29 @@ public class ReservationGUIController {
 
     }
 
-    /**
-     * [기본 생성자] - 테스트용 서버 연결 없이 테스트 또는 임시 실행
-     */
     public ReservationGUIController() {
 
         view = new ReservationView();
         view.setUserInfo(userName, userId, userDept);
 
-        // userName이나 userDept가 비어 있으면 서버에 사용자 정보 요청
         if ((userName == null || userName.isEmpty()) || (userDept == null || userDept.isEmpty())) {
-            try { // 추가
+            try { 
                 ServerClient.CommandProcessor.getInstance().addCommand(
-                        new ServerClient.InfoRequestCommand(out, userId) //이것도 수정함ㅁ요
+                        new ServerClient.InfoRequestCommand(out, userId)
                 );
                 String response = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
-                if (response != null && response.startsWith("INFO_RESPONSE:")) { // 추가
+                if (response != null && response.startsWith("INFO_RESPONSE:")) { 
                     String[] parts = response.substring("INFO_RESPONSE:".length()).split(",");
                     if (parts.length >= 3) {
                         this.userName = parts[1];
                         this.userDept = parts[2];
-                        view.setUserInfo(this.userName, userId, this.userDept); // 추가
-                    } // 추가
-                } // 추가
-            } catch (IOException e) { // 추가
-                System.out.println(" 사용자 정보 요청 오류: " + e.getMessage()); // 추가
-            } // 추가
-        } // 추가
+                        view.setUserInfo(this.userName, userId, this.userDept);
+                    } 
+                } 
+            } catch (IOException e) {
+                System.out.println(" 사용자 정보 요청 오류: " + e.getMessage()); 
+            } 
+        } 
         initializeReservationFeatures();
         view.setVisible(true);
     }
@@ -132,94 +127,6 @@ public class ReservationGUIController {
         view.addRoomSelectionListener(timeUpdateListener);
         view.addDateSelectionListener(timeUpdateListener);
 
-        // 예약 버튼 이벤트 처리
-        /*view.addReserveButtonListener(
-                e -> {
-                    String date = view.getSelectedDate();
-                    List<String> times = view.getSelectedTimes();
-                    String time = view.getSelectedTime();
-                    String purpose = view.getSelectedPurpose();
-                    String selectedRoomName = view.getSelectedRoom();
-                    RoomModel selectedRoom = getRoomByName(selectedRoomName);
-
-                    AbstractReservation test;
-                    
-                    if (userType.equals("학생")){
-                    test = new StudentReservation();
-                    } else {test = new ProfessorReservation();}
-                 
-                    test.doReservation(userId,
-                            userType, userName,
-                            userDept, date,
-                            times, purpose,
-                            time, selectedRoomName,
-                            view
-                    );
-                }
-        /*                e -> {
-            String date = view.getSelectedDate();
-            List<String> times = view.getSelectedTimes();
-            String time = view.getSelectedTime();
-            String purpose = view.getSelectedPurpose();
-            String selectedRoomName = view.getSelectedRoom();
-            RoomModel selectedRoom = getRoomByName(selectedRoomName);
-
-            if (date.isEmpty() || time.isEmpty() || purpose.isEmpty() || selectedRoom == null) {
-                view.showMessage("모든 항목을 입력해주세요.");
-                return;
-            }
-
-            // 예약 제한 사용자 체크 추가 부분
-            ReservationController controller = new ReservationController();
-            if (controller.isUserBanned(userId)) {
-                view.showMessage("해당 사용자는 예약이 제한되어 있습니다. 관리자에게 문의하세요.");
-                return;
-            }
-
-            // ✅ 시간 중복 체크 (교수/학생 공통)
-            if (isTimeSlotAlreadyReserved(selectedRoomName, date, times)) {
-                view.showMessage("선택한 시간대에 이미 예약이 존재합니다.");
-                return;
-            }
-
-            // ✅ 학생만 예약 제한 적용
-            if (userType.equals("학생")) {
-                if (isUserAlreadyReserved(userId, date)) {
-                    view.showMessage("학생은 하루 1회만 예약할 수 있습니다.");
-                    return;
-                }
-
-                int totalMinutes = calculateTotalDuration(times);
-                if (totalMinutes > 120) {
-                    view.showMessage("총 예약 시간이 2시간(120분)을 초과할 수 없습니다.");
-                    return;
-                }
-            }
-
-            String status = userType.equals("교수") ? "예약확정" : "예약대기";
-
-            if (userType.equals("교수")) {
-                view.showMessage("예약이 확정되었습니다.");
-            } else {
-                view.showMessage("예약이 등록되었습니다. 관리자의 승인을 기다리는 중입니다.");
-            }
-
-            String dayOfWeek = getDayOfWeek(date);
-
-            for (String selectedTime : times) {
-                String[] split = selectedTime.split("~");
-                if (split.length == 2) {
-                    String startTime = split[0].trim();
-                    String endTime = split[1].trim();
-
-                    saveReservation(userName, userType, userId, userDept,
-                            selectedRoom.getType(), selectedRoom.getName(),
-                            date, dayOfWeek, startTime, endTime, purpose, status);
-                }
-            }
-        }
-                *///);
-        
         view.addReserveButtonListener(
                 e -> {
                     //  예약 제한 사용자 체크 (가장 먼저 실행!)
@@ -233,11 +140,23 @@ public class ReservationGUIController {
                     List<String> times = view.getSelectedTimes();
                     String purpose = view.getSelectedPurpose();
                     String selectedRoomName = view.getSelectedRoom();
+                    String accompanying = view.getAccompanyingStudents();
 
                     if (date.isEmpty() || times.isEmpty() || purpose.isEmpty() || selectedRoomName == null) {
                         view.showMessage("모든 항목을 선택해주세요.");
                         return;
                     }
+                    // ===============================================================
+                // [핵심 로직] 동반 학생이 있다면 '목적' 뒤에 내용을 붙임
+                // 예: "스터디" -> "스터디 (동반: 홍길동, 20201234)"
+                // *주의: 파일이 콤마(,)로 구분되므로, 입력값의 콤마는 공백 등으로 바꿔야 안전함
+                // ===============================================================
+                if (!accompanying.isEmpty()) {
+                    // 콤마(,)가 있으면 파일 구조가 깨지므로 슬래시(/)나 공백으로 치환
+                    String safeAccompanying = accompanying.replace(",", "/");
+                    purpose = purpose + " (동반: " + safeAccompanying + ")";
+                }
+                    
 
                     // 2. Builder로 예약 객체 생성
                     ReservationInfo reservation;
@@ -510,27 +429,6 @@ public class ReservationGUIController {
     }
 
     /**
-     * 예약 정보를 파일에 저장 (reservation.txt)
-     */
-    /*
-    private void saveReservation(String name, String userType, String userId, String department,
-            String roomType, String roomNumber,
-            String date, String dayOfWeek, String startTime, String endTime,
-            String purpose, String status) {
-        String filePath = "src/main/resources/reservation.txt";
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(filePath, true), "UTF-8"))) {
-            writer.write(String.join(",", name, userType, userId, department,
-                    roomType, roomNumber, date, dayOfWeek, startTime, endTime,
-                    purpose, status));
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("예약 저장 실패: " + e.getMessage());
-        }
-    }
-    */
-
-    /**
      * 날짜 문자열 → 한글 요일 반환
      */
     public String getDayOfWeek(String dateStr) {
@@ -591,7 +489,7 @@ public class ReservationGUIController {
         }
     }
     
-    // [추가] 제한된 사용자인지 확인하는 메서드
+    // 제한된 사용자인지 확인하는 메서드
     public boolean isUserBanned(String studentId) {
         String banFile = "src/main/resources/banlist.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(banFile))) {

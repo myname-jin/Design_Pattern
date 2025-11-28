@@ -158,6 +158,7 @@ public class ReservationMgmtController {
         }
     }
     
+    // [해제] 파일에서 삭제 + 알림 전송
     public void unbanUser(String studentId) {
         List<String> bannedLines = getBannedLines();
         boolean removed = false;
