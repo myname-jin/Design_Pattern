@@ -39,10 +39,10 @@ public class TestStrategyPattern {
             System.out.println(">>> 실패: 데이터 개수가 맞지 않습니다.");
         }
 
-        // Case 2: 주별 전략 (WeeklyStrategy)
         System.out.println("\n[2] 전략 교체: 주별 전략 (WeeklyStrategy)");
+        
+        // Case 2: 주별 전략 (WeeklyStrategy)        
         context.setStrategy(new WeeklyStrategy());
-
         Map<String, Integer> weeklyResult = context.analyze(data);
         printResult(weeklyResult);
 
@@ -53,10 +53,10 @@ public class TestStrategyPattern {
             System.out.println(">>> 실패: 주차 계산이 이상합니다.");
         }
 
-        // Case 3: 월별 전략 (MonthlyStrategy)
         System.out.println("\n[3] 전략 교체: 월별 전략 (MonthlyStrategy)");
+        
+        // Case 3: 월별 전략 (MonthlyStrategy)
         context.setStrategy(new MonthlyStrategy());
-
         Map<String, Integer> monthlyResult = context.analyze(data);
         printResult(monthlyResult);
 
