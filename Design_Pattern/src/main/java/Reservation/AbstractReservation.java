@@ -339,7 +339,7 @@ public abstract class AbstractReservation {
         }
     }
 
-    private void saveReservation(String name, String userType, String userId, String department,
+    private void saveReservation(String userId, String userType, String name, String department,
             String roomType, String roomNumber,
             String date, String dayOfWeek, String startTime, String endTime,
             String purpose, String status) {
