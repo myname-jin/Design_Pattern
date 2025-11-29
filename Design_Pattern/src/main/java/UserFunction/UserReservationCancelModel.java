@@ -82,9 +82,9 @@ public class UserReservationCancelModel {
      */
     public boolean saveCancelReason(String userId, String reason) {
         File file = new File(CANCEL_FILE);
-        if (!file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
-        }
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+    file.getParentFile().mkdirs();
+}
 
         try (BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(file, true), StandardCharsets.UTF_8))) {
