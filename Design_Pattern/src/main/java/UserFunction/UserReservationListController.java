@@ -24,7 +24,7 @@ public class UserReservationListController {
     private UserReservationListView view;
     private final JTable table;
     private  String userId;
-    private final String filePath = "src/main/resources/reservation.txt";
+    private final String filePath = "reservation.txt"; 
     private String userType;
     private Socket socket;
     private BufferedReader in;

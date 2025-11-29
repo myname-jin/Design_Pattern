@@ -5,7 +5,6 @@
 package Reservation;
 
 
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,27 +30,26 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ReservationSystemIntegrationTest {
     private MockReservationView mockView;
 
-    // 실제 파일 경로 (src/main/resources) 사용
-    private final String BAN_LIST_PATH = "src/main/resources/banlist.txt";
-    private final String RESERVATION_PATH = "src/main/resources/reservation.txt";
-    private final String CANCEL_PATH = "src/main/resources/cancel.txt";
+    // [핵심 수정] 경로에서 "src/main/resources/"를 제거했습니다.
+    // 프로젝트 최상위 폴더(Root)에서 파일을 찾거나 생성합니다.
+    private final String BAN_LIST_PATH = "banlist.txt";
+    private final String RESERVATION_PATH = "reservation.txt";
+    private final String CANCEL_PATH = "cancel.txt";
 
     @BeforeEach
     public void setUp() {
         System.out.println("[Integration Setup] 테스트 준비");
-        // 폴더가 없으면 생성 (있으면 무시됨)
-        new File("src/main/resources").mkdirs();
+        // 파일이 없으면 생성해주는 로직 (경로 에러 방지)
+        createDummyFileIfNotExists(RESERVATION_PATH);
+        createDummyFileIfNotExists(BAN_LIST_PATH);
+        createDummyFileIfNotExists(CANCEL_PATH);
         
         mockView = new MockReservationView();
-        
-     
     }
 
     @AfterEach
     public void tearDown() {
         System.out.println("[Integration TearDown] 테스트 종료 (파일 보존)");
-        
-      
     }
 
     /**
@@ -76,7 +74,7 @@ public class ReservationSystemIntegrationTest {
         
         System.out.println("1. 학생 예약 데이터 준비 완료");
 
-       
+        
         ProfessorReservation profRes = new ProfessorReservation();
         profRes.view = mockView;
         
@@ -123,6 +121,18 @@ public class ReservationSystemIntegrationTest {
         allRoomsField.set(instance, roomList);
     }
 
+    // 파일이 없으면 빈 파일 생성 (에러 방지)
+    private void createDummyFileIfNotExists(String path) {
+        File file = new File(path);
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void createFile(String path, String content) {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path), "UTF-8"))) {
             writer.write(content);
@@ -138,7 +148,11 @@ public class ReservationSystemIntegrationTest {
     
     private List<String> readFile(String path) {
         List<String> lines = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(path), "UTF-8"))) {
+        // 파일이 존재하는지 확인 후 읽기 시도
+        File file = new File(path);
+        if(!file.exists()) return lines;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if(!line.trim().isEmpty()) lines.add(line);
