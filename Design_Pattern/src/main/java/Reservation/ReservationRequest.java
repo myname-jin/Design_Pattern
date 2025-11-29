@@ -19,6 +19,12 @@ public class ReservationRequest {
     private String purpose;
     // ... 생성자 및 Getter 메서드 ...
     
+    public ReservationRequest(String userId, String date, String selectedRoomName, List<String> times) {
+        this.userId = userId;
+        this.date = date;
+        this.selectedRoomName = selectedRoomName;
+        this.times = times;
+    }
     public ReservationRequest(String userId, String userType, String date, List<String> times, String selectedRoomName, String purpose) {
         this.userId = userId;
         this.userType = userType;

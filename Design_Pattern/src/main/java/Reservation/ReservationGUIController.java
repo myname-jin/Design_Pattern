@@ -127,72 +127,86 @@ public class ReservationGUIController {
         view.addRoomSelectionListener(timeUpdateListener);
         view.addDateSelectionListener(timeUpdateListener);
 
-        view.addReserveButtonListener(
-                e -> {
-                    //  예약 제한 사용자 체크 (가장 먼저 실행!)
-                    if (isUserBanned(userId)) {
-                        view.showMessage("현재 예약 권한이 제한된 상태입니다.\n관리자에게 문의하세요.");
-                        return; // 예약 진행 중단 (여기서 끝냄)
-                    }
-                    
-                    // 1. 선택 정보 가져오기
-                    String date = view.getSelectedDate();
-                    List<String> times = view.getSelectedTimes();
-                    String purpose = view.getSelectedPurpose();
-                    String selectedRoomName = view.getSelectedRoom();
-                    String accompanying = view.getAccompanyingStudents();
+        view.addReserveButtonListener(e -> {
+            // 1. 선택 정보 가져오기
+            String date = view.getSelectedDate();
+            List<String> times = view.getSelectedTimes();
+            String purpose = view.getSelectedPurpose();
+            String selectedRoomName = view.getSelectedRoom();
+            String accompanying = view.getAccompanyingStudents();
 
-                    if (date.isEmpty() || times.isEmpty() || purpose.isEmpty() || selectedRoomName == null) {
-                        view.showMessage("모든 항목을 선택해주세요.");
-                        return;
-                    }
-                    // ===============================================================
-                // [핵심 로직] 동반 학생이 있다면 '목적' 뒤에 내용을 붙임
-                // 예: "스터디" -> "스터디 (동반: 홍길동, 20201234)"
-                // *주의: 파일이 콤마(,)로 구분되므로, 입력값의 콤마는 공백 등으로 바꿔야 안전함
-                // ===============================================================
-                if (!accompanying.isEmpty()) {
-                    // 콤마(,)가 있으면 파일 구조가 깨지므로 슬래시(/)나 공백으로 치환
-                    String safeAccompanying = accompanying.replace(",", "/");
-                    purpose = purpose + " (동반: " + safeAccompanying + ")";
-                }
-                    
+            if (date.isEmpty() || times.isEmpty() || purpose.isEmpty() || selectedRoomName == null) {
+                view.showMessage("모든 항목을 선택해주세요.");
+                return;
+            }
 
-                    // 2. Builder로 예약 객체 생성
-                    ReservationInfo reservation;
-                    try {
-                        reservation = new ReservationInfoBuilder()
-                            .setUserInfo(userId, userName, userDept)
-                            .setRoomInfo(selectedRoomName)
-                            .setDateAndTimes(date, times)
-                            .setPurpose(purpose)
-                            .buildReservation();
-                    } catch (IllegalStateException ex) {
-                        view.showMessage(ex.getMessage());
-                        return;
-                    }
+            // ============================================================
+            // ★ [수정됨] 책임 연쇄 패턴 적용 (순차적 검증 수행)
+            // ============================================================
+            try {
+                // 1. 검증 요청 객체 생성 
+                // (ReservationRequest 생성자가 (userId, date, roomName, times) 순서라고 가정)
+                ReservationRequest request = new ReservationRequest(userId, date, selectedRoomName, times);
 
-                    // 3. 기존 doReservation 호출 (서버 저장, txt 기록 유지)
-                    AbstractReservation reservationHandler;
-                    if (userType.equals("학생")) {
-                        reservationHandler = new StudentReservation();
-                    } else {
-                        reservationHandler = new ProfessorReservation();
-                    }
+                // 2. 핸들러 체인 구성
+                // 순서: [유저 차단 확인] -> [관리자 날짜 차단 확인] -> [기존 예약 중복 확인]
+                ReservationCheckHandler chain = new CheckUserBannedHandler(); // 유저 차단 핸들러
+                
+                chain.setNext(new CheckAdminBlockHandler())    // ★ 새로 만든 관리자 차단 핸들러 연결
+                     .setNext(new CheckTimeSlotReservedHandler()); // 시간 중복 핸들러 연결
 
-                    reservationHandler.doReservation(
-                            userId,
-                            userType,
-                            userName,
-                            userDept,
-                            reservation.getDate(),
-                            reservation.getTimes(),
-                            reservation.getPurpose(),
-                            "", // 단일 시간 필요시 추가
-                            reservation.getRoomName(),
-                            view
-                    );
-                });
+                // 3. 검증 실행 (하나라도 통과 못하면 Exception 발생하여 catch로 이동)
+                chain.check(request);
+
+            } catch (Exception ex) {
+                // 검증 실패 시 에러 메시지 띄우고 중단 (예약 진행 안 함)
+                view.showMessage(ex.getMessage());
+                return; 
+            }
+            // ============================================================
+
+            // 4. 동반 학생 처리 (기존 로직 유지)
+            // 콤마(,)가 있으면 파일 구조가 깨지므로 슬래시(/)나 공백으로 치환
+            if (!accompanying.isEmpty()) {
+                String safeAccompanying = accompanying.replace(",", "/");
+                purpose = purpose + " (동반: " + safeAccompanying + ")";
+            }
+
+            // 5. Builder로 예약 객체 생성 (기존 로직 유지)
+            ReservationInfo reservation;
+            try {
+                reservation = new ReservationInfoBuilder()
+                    .setUserInfo(userId, userName, userDept)
+                    .setRoomInfo(selectedRoomName)
+                    .setDateAndTimes(date, times)
+                    .setPurpose(purpose)
+                    .buildReservation();
+            } catch (IllegalStateException ex) {
+                view.showMessage(ex.getMessage());
+                return;
+            }
+
+            // 6. 실제 예약 수행 (서버 전송 및 txt 기록)
+            AbstractReservation reservationHandler;
+            if (userType.equals("학생")) {
+                reservationHandler = new StudentReservation();
+            } else {
+                reservationHandler = new ProfessorReservation();
+            }
+
+            reservationHandler.doReservation(
+                    userId,
+                    userType,
+                    userName,
+                    userDept,
+                    reservation.getDate(),
+                    reservation.getTimes(),
+                    reservation.getPurpose(),
+                    "", // 단일 시간 필요시 추가 (현재 로직상 공란)
+                    reservation.getRoomName(),
+                    view
+            );
+        });
 
         view.addBackButtonListener(e -> {
             view.dispose();  // 현재 ReservationView 닫기
