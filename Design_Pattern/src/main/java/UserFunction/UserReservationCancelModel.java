@@ -7,8 +7,8 @@ import java.util.List;
 
 public class UserReservationCancelModel {
 
-   private static final String RESERVATION_FILE = "reservation.txt";
-    private static final String CANCEL_FILE = "cancel.txt";
+    private static final String RESERVATION_FILE = "src/main/resources/reservation.txt";
+    private static final String CANCEL_FILE = "src/main/resources/cancel.txt";
 
     /**
      * 예약 상태를 '취소'로 변경하는 메서드
