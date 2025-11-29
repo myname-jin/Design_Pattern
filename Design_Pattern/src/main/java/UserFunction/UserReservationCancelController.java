@@ -4,10 +4,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
-/**
- *
- * @author jms5310
- */
 public class UserReservationCancelController {
     private UserReservationCancelModel model;
     private UserReservationCancelView view;
@@ -28,18 +24,22 @@ public class UserReservationCancelController {
         
         JTable table = parentView.getTable();
         
+        // 테이블 컬럼 순서에 맞춰 데이터 가져오기
+        // {"이름", "학번", "강의실", "날짜", "요일", "시작시간", "종료시간", "승인상태"}
         this.name = table.getValueAt(selectedRow, 0).toString();
         this.userId = table.getValueAt(selectedRow, 1).toString();
         this.room = table.getValueAt(selectedRow, 2).toString();
         this.date = table.getValueAt(selectedRow, 3).toString();
+        // 요일(4) 건너뜀
         this.startTime = table.getValueAt(selectedRow, 5).toString();
         this.endTime = table.getValueAt(selectedRow, 6).toString();
         
+        // 뷰 생성
         Window parentWindow = SwingUtilities.getWindowAncestor(parentView);
         if (parentWindow instanceof Frame) {
             this.view = new UserReservationCancelView((Frame) parentWindow);
         } else {
-            this.view = new UserReservationCancelView(null); // 부모가 프레임이 아니면 null
+            this.view = new UserReservationCancelView(null);
         }
         
         this.view.setReservationInfo(name, userId, room, date, startTime, endTime);
@@ -58,7 +58,7 @@ public class UserReservationCancelController {
             return;
         }
         
-        //  예약 취소 요청
+        // 1. 예약 취소 요청 (startTime 포함)
         boolean cancelSuccess = model.cancelReservation(userId, date, room, startTime);
         
         if (!cancelSuccess) {
@@ -66,9 +66,10 @@ public class UserReservationCancelController {
             return;
         }
         
-        // 취소 이유 저장
+        // 2. 취소 사유 저장 (cancel.txt)
         model.saveCancelReason(userId, reason);
         
+        // 3. 화면 갱신 (테이블 행 삭제)
         DefaultTableModel tableModel = (DefaultTableModel) parentView.getTable().getModel();
         tableModel.removeRow(selectedRow);
         
