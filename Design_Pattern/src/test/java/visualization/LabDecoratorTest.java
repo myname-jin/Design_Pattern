@@ -8,29 +8,51 @@ package visualization;
  *
  * @author adsd3
  */
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import javax.swing.*;
 import java.awt.*;
-import visualization.*;
 
-public class LabDecoratorTest extends JFrame {
-    public LabDecoratorTest() {
-        setTitle("[Unit Test] LabDecorator Only");
-        setSize(300, 500);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        
-        add(new JPanel() {
+/**
+ */
+public class LabDecoratorTest {
+    private JFrame frame;
+
+    @BeforeEach
+    public void setUp() {
+        frame = new JFrame();
+        frame.setTitle("[Unit Test] LabDecorator Only");
+        frame.setSize(300, 500);
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+    }
+
+    @Test
+    public void testDecoratorVisuals() throws InterruptedException {
+        // [Test Execution]
+        JPanel panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 g.drawString("실습실 장식 (주황+아이콘)", 50, 50);
                 
-                // 단위 테스트 대상: LabDecorator
+                // 단위 테스트 대상: LabDecorator (Decorator)
                 ChartElement lab = new LabDecorator(new BasicBar());
                 lab.draw(g, 100, 200, 50, 100, 10, "911호");
             }
-        });
-        setLocationRelativeTo(null);
-        setVisible(true);
+        };
+        
+        frame.add(panel);
+        frame.setVisible(true);
+        System.out.println(">>> [LabDecorator Test] 주황색 채우기와 아이콘을 확인하세요.");
+        Thread.sleep(2000); 
     }
-    public static void main(String[] args) { new LabDecoratorTest(); }
+
+    @AfterEach
+    public void tearDown() {
+        if (frame != null) {
+            frame.dispose();
+        }
+    }
 }

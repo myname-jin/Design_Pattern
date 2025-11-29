@@ -47,28 +47,39 @@ public class PasswordController {
             return;
         }
 
+        try {// 응답 대기를 별도 스레드에서 처리
+    // 1. 서버에 변경 명령 전송
+    CommandProcessor.getInstance().addCommand(
+        new PasswordChangeCommand(writer, userId, oldPw, newPw)
+    );
+
+    // 2. 응답 대기는 별도 스레드(작업자)에게 맡김 -> 화면 안 멈춤
+    new Thread(() -> {
         try {
-            // [수정] 커맨드 생성 시 writer 주입
-            CommandProcessor.getInstance().addCommand(
-                new PasswordChangeCommand(writer, userId, oldPw, newPw)
-            );
-            
-            // 응답 읽기
-            String response = in.readLine();
-            
-            if ("PW_CHANGE_SUCCESS".equals(response)) {
-                JOptionPane.showMessageDialog(view, "비밀번호가 성공적으로 변경되었습니다. 로그인 화면으로 돌아갑니다.");
-                handleCancel();
-            } else if ("PW_CHANGE_FAIL:NO_ID".equals(response)) {
-                JOptionPane.showMessageDialog(view, "해당 ID를 찾을 수 없습니다.", "오류", JOptionPane.ERROR_MESSAGE);
-            } else if ("PW_CHANGE_FAIL:WRONG_OLD_PW".equals(response)) {
-                JOptionPane.showMessageDialog(view, "기존 비밀번호가 일치하지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(view, "비밀번호 변경에 실패했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
-            }
-            
+            String response = in.readLine(); // 서버 응답 대기
+
+            // 3. 응답이 오면 화면(UI) 업데이트는 다시 메인 스레드에서 실행
+            SwingUtilities.invokeLater(() -> {
+                if ("PW_CHANGE_SUCCESS".equals(response)) {
+                    JOptionPane.showMessageDialog(view, "비밀번호가 성공적으로 변경되었습니다. 로그인 화면으로 돌아갑니다.");
+                    handleCancel();
+                } else if ("PW_CHANGE_FAIL:NO_ID".equals(response)) {
+                    JOptionPane.showMessageDialog(view, "해당 ID를 찾을 수 없습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                } else if ("PW_CHANGE_FAIL:WRONG_OLD_PW".equals(response)) {
+                    JOptionPane.showMessageDialog(view, "기존 비밀번호가 일치하지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(view, "비밀번호 변경에 실패했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                }
+            });
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(view, "서버 통신 오류: " + e.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
+            SwingUtilities.invokeLater(() -> 
+                JOptionPane.showMessageDialog(view, "서버 통신 오류: " + e.getMessage(), "오류", JOptionPane.ERROR_MESSAGE)
+            );
+        }
+    }).start();
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "명령 전송 오류: " + e.getMessage(), "오류", JOptionPane.ERROR_MESSAGE);
         }
     }
 

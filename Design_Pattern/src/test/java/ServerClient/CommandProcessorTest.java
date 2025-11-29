@@ -8,10 +8,12 @@ package ServerClient;
  *
  * @author adsd3
  */
-import ServerClient.CommandProcessor;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 
 public class CommandProcessorTest {
-    public static void main(String[] args) {
+    @Test
+    public void testSingletonInstanceUniqueness() {
         System.out.println("=== CommandProcessor (Singleton) 유일성 검증 ===");
 
         // 1. 인스턴스를 두 번 가져옴
@@ -25,11 +27,8 @@ public class CommandProcessorTest {
         System.out.println("  [객체 1] HashCode: " + hash1);
         System.out.println("  [객체 2] HashCode: " + hash2);
         
-        // 3. 검증
-        if (cp1 == cp2) {
-            System.out.println(" Pass: 인스턴스 주소 일치 (두 객체는 동일합니다.)");
-        } else {
-            System.err.println(" Fail: 객체가 다르게 생성되었습니다.");
-        }
+        // 3. 검증: 두 객체가 메모리상 동일한지 확인
+        Assertions.assertSame(cp1, cp2, 
+                "두 객체는 동일해야 합니다. 싱글톤 패턴 실패.");
     }
 }
