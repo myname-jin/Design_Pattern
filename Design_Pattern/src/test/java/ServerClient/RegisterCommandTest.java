@@ -8,11 +8,15 @@ package ServerClient;
  *
  * @author adsd3
  */
-import ServerClient.RegisterCommand;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 import java.io.*;
 
 public class RegisterCommandTest {
-    public static void main(String[] args) throws IOException {
+    
+    @Test
+    public void testCommandStringFormat() throws IOException {
         System.out.println("[Unit Test] RegisterCommand 기능 검증");
         
         StringWriter sw = new StringWriter();
@@ -25,7 +29,6 @@ public class RegisterCommandTest {
         String result = sw.toString().trim();
         String expected = "REGISTER:Student:newUser:pass:Kim:CS";
         
-        if (expected.equals(result)) System.out.println("✅ Pass");
-        else System.err.println(" Fail: " + result);
+        Assertions.assertEquals(expected, result, "회원가입 프로토콜 포맷이 일치해야 합니다.");
     }
 }

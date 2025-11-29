@@ -8,33 +8,37 @@ package visualization;
  *
  * @author adsd3
  */
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 import visualization.ReservationModel;
 import java.util.Set;
 
+/**
+ */
 public class ReservationModelTest {
-    public static void main(String[] args) {
+    
+    @Test
+    public void testDataLoadingAndAggregation() {
         System.out.println("============== [Unit Test] ReservationModel ==============");
         
         ReservationModel model = new ReservationModel();
         
         // TEST 1: 연도 로딩 확인
         Set<Integer> years = model.getYears();
-        if (!years.isEmpty()) {
-            System.out.println(" [Pass] 연도 데이터 로딩 성공: " + years);
-        } else {
-            System.out.println(" [Fail] 데이터가 비어있습니다. (파일 경로 확인 필요)");
-        }
+        System.out.println(" [Info] 로딩된 연도: " + years);
+        
+        // 데이터 파일이 있어야 통과됨
+        Assertions.assertFalse(years.isEmpty(), "데이터 파일 로딩에 성공하여 연도 데이터가 비어있지 않아야 합니다.");
 
-        // TEST 2: 데이터 집계 확인
-        if (!years.isEmpty()) {
-            int year = years.iterator().next();
-            int total = model.getYearTotal(year);
-            if (total > 0) {
-                System.out.println(" [Pass] " + year + "년 데이터 집계 성공 (" + total + "건)");
-            } else {
-                System.out.println(" [Fail] 집계된 데이터가 0건입니다.");
-            }
-        }
+        // TEST 2: 데이터 집계 확인 (로딩된 첫 해를 대상으로 집계 시도)
+        int year = years.iterator().next();
+        int total = model.getYearTotal(year);
+        
+        System.out.println(" [Info] " + year + "년 총 집계 건수: " + total + "건");
+        
+        Assertions.assertTrue(total > 0, "데이터 파일이 있다면 총 집계 건수가 0보다 커야 합니다.");
+
         System.out.println("==========================================================");
     }
 }

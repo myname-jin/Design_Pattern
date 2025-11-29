@@ -8,11 +8,14 @@ package ServerClient;
  *
  * @author adsd3
  */
-import ServerClient.PasswordChangeCommand;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 import java.io.*;
 
 public class PasswordChangeCommandTest {
-    public static void main(String[] args) throws IOException {
+    
+    @Test
+    public void testCommandStringFormat() throws IOException {
         System.out.println("[Unit Test] PasswordChangeCommand 기능 검증");
         
         StringWriter sw = new StringWriter();
@@ -25,7 +28,6 @@ public class PasswordChangeCommandTest {
         String result = sw.toString().trim();
         String expected = "PW_CHANGE:user1,old,new";
         
-        if (expected.equals(result)) System.out.println(" Pass");
-        else System.err.println(" Fail: " + result);
+        Assertions.assertEquals(expected, result, "비밀번호 변경 프로토콜 포맷이 일치해야 합니다.");
     }
 }

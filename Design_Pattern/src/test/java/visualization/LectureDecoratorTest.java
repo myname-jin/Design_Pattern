@@ -8,17 +8,30 @@ package visualization;
  *
  * @author adsd3
  */
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import javax.swing.*;
 import java.awt.*;
-import visualization.*;
 
-public class LectureDecoratorTest extends JFrame {
-    public LectureDecoratorTest() {
-        setTitle("[Unit Test] LectureDecorator Only");
-        setSize(300, 500);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        
-        add(new JPanel() {
+/**
+ */
+public class LectureDecoratorTest {
+    private JFrame frame;
+
+    @BeforeEach
+    public void setUp() {
+        frame = new JFrame();
+        frame.setTitle("[Unit Test] LectureDecorator Only");
+        frame.setSize(300, 500);
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+    }
+
+    @Test
+    public void testDecoratorVisuals() throws InterruptedException {
+        // [Test Execution]
+        JPanel panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -28,9 +41,18 @@ public class LectureDecoratorTest extends JFrame {
                 ChartElement lecture = new LectureDecorator(new BasicBar());
                 lecture.draw(g, 100, 200, 50, 100, 15, "912호");
             }
-        });
-        setLocationRelativeTo(null);
-        setVisible(true);
+        };
+        
+        frame.add(panel);
+        frame.setVisible(true);
+        System.out.println(">>> [LectureDecorator Test] 파란색 채우기를 확인하세요.");
+        Thread.sleep(2000); 
     }
-    public static void main(String[] args) { new LectureDecoratorTest(); }
+
+    @AfterEach
+    public void tearDown() {
+        if (frame != null) {
+            frame.dispose();
+        }
+    }
 }

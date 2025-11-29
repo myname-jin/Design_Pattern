@@ -8,11 +8,14 @@ package ServerClient;
  *
  * @author adsd3
  */
-import ServerClient.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 import java.io.*;
 
 public class CommandPatternIntegrationTest {
-    public static void main(String[] args) throws InterruptedException {
+    
+    @Test
+    public void testFullPipelineFlow() throws InterruptedException {
         System.out.println("=== 커맨드 패턴 통합 테스트 (Integration Test) ===");
 
         StringWriter sw = new StringWriter();
@@ -33,12 +36,9 @@ public class CommandPatternIntegrationTest {
         String result = sw.toString();
         System.out.println(result);
 
-        if (result.contains("LOGIN:userA") && 
+        // 순서대로 데이터가 모두 포함되어 있는지 확인
+        Assertions.assertTrue(result.contains("LOGIN:userA") && 
             result.contains("INFO_REQUEST:userA") && 
-            result.contains("LOGOUT:userA")) {
-            System.out.println(" 통합 테스트 성공");
-        } else {
-            System.err.println(" 통합 테스트 실패");
-        }
+            result.contains("LOGOUT:userA"), "모든 명령이 리시버에 도달하고 순서가 유지되어야 합니다.");
     }
 }

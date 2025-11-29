@@ -8,17 +8,30 @@ package visualization;
  *
  * @author adsd3
  */
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import javax.swing.*;
 import java.awt.*;
-import visualization.BasicBar;
 
-public class BasicBarTest extends JFrame {
-    public BasicBarTest() {
-        setTitle("[Unit Test] BasicBar Only");
-        setSize(300, 500);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        
-        add(new JPanel() {
+/**
+ */
+public class BasicBarTest {
+    private JFrame frame;
+
+    @BeforeEach
+    public void setUp() {
+        frame = new JFrame();
+        frame.setTitle("[Unit Test] BasicBar Only");
+        frame.setSize(300, 500);
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+    }
+
+    @Test
+    public void testBasicBarDraw() throws InterruptedException {
+        // [Test Execution]
+        JPanel panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -26,11 +39,21 @@ public class BasicBarTest extends JFrame {
                 
                 // 단위 테스트 대상: BasicBar
                 BasicBar bar = new BasicBar();
+                // (Graphics, startX, startY, width, height, value, roomID)
                 bar.draw(g, 100, 200, 50, 100, 5, "900호");
             }
-        });
-        setLocationRelativeTo(null);
-        setVisible(true);
+        };
+        
+        frame.add(panel);
+        frame.setVisible(true);
+        System.out.println(">>> [BasicBar Test] 창을 확인하고 닫아주세요.");
+        Thread.sleep(2000); // 시각적 검증 시간 부여
     }
-    public static void main(String[] args) { new BasicBarTest(); }
+
+    @AfterEach
+    public void tearDown() {
+        if (frame != null) {
+            frame.dispose();
+        }
+    }
 }
